@@ -1,0 +1,83 @@
+.adminRoot { min-height: 100vh; background: var(--bg-deep); font-family: var(--font-sans); }
+
+/* Login */
+.loginWrapper { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: var(--space-6); }
+.loginCard {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-2xl); padding: var(--space-8);
+  width: 100%; max-width: 380px;
+  display: flex; flex-direction: column; gap: var(--space-6);
+}
+.loginLogo { display: flex; align-items: center; gap: var(--space-2); font-size: 18px; font-weight: 600; color: var(--text-primary); }
+.loginLogoMark {
+  width: 32px; height: 32px; background: var(--color-brand); color: white;
+  font-weight: 700; font-size: 15px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+}
+.loginForm { display: flex; flex-direction: column; gap: var(--space-3); }
+.loginLabel { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+.loginInput {
+  height: 44px; background: var(--bg-panel); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); color: var(--text-primary);
+  font-size: 14px; padding: 0 var(--space-4); outline: none; width: 100%;
+  font-family: var(--font-sans);
+}
+.loginInput:focus { border-color: var(--color-brand); box-shadow: 0 0 0 3px var(--color-brand-glow); }
+.loginError { font-size: 12px; color: var(--color-error); }
+.loginButton {
+  height: 44px; background: var(--color-brand); color: white;
+  border: none; border-radius: var(--radius-md); font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: background var(--transition-fast);
+  font-family: var(--font-sans);
+}
+.loginButton:hover { background: var(--color-brand-dark); }
+
+/* Dashboard */
+.loading { padding: var(--space-16); text-align: center; color: var(--text-secondary); }
+.errorState { padding: var(--space-16); text-align: center; color: var(--color-error); }
+
+.dashboard { max-width: 1100px; margin: 0 auto; padding: var(--space-8) var(--space-6); display: flex; flex-direction: column; gap: var(--space-8); }
+.dashboardHeader { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.dashboardTitle { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+.dashboardSubtitle { font-size: 13px; color: var(--text-muted); margin-left: auto; }
+
+/* Metric cards */
+.metricsGrid { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--space-4); }
+.metricCard {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl); padding: var(--space-5);
+  display: flex; flex-direction: column; gap: var(--space-1);
+}
+.metric_brand  { border-left: 3px solid var(--color-brand); }
+.metric_success { border-left: 3px solid var(--color-success); }
+.metric_warning { border-left: 3px solid var(--color-warning); }
+.metric_error  { border-left: 3px solid var(--color-error); }
+.metricLabel { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+.metricValue { font-size: 28px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
+.metricSubtitle { font-size: 12px; color: var(--text-muted); }
+
+/* Charts */
+.chartsGrid { display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-4); }
+.chartContainer, .rolesContainer {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl); padding: var(--space-6);
+}
+.chartTitle { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-4); }
+
+.chart { display: flex; align-items: flex-end; gap: var(--space-1); height: 120px; }
+.chartBar { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); flex: 1; height: 100%; justify-content: flex-end; }
+.chartBarFill { width: 100%; min-height: 3px; background: var(--color-brand); border-radius: 2px 2px 0 0; transition: height 0.3s ease; }
+.chartBarLabel { font-size: 10px; color: var(--text-muted); font-family: var(--font-mono); white-space: nowrap; }
+
+.rolesList { display: flex; flex-direction: column; gap: var(--space-3); }
+.roleRow { display: flex; align-items: center; gap: var(--space-3); }
+.roleLabel { font-size: 13px; color: var(--text-secondary); width: 110px; flex-shrink: 0; }
+.roleBarTrack { flex: 1; height: 8px; background: var(--bg-panel); border-radius: var(--radius-full); overflow: hidden; }
+.roleBarFill { height: 100%; background: var(--color-brand); border-radius: var(--radius-full); transition: width 0.5s ease; }
+.roleCount { font-size: 13px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); width: 28px; text-align: right; }
+.emptyState { font-size: 13px; color: var(--text-muted); padding: var(--space-4) 0; }
+
+@media (max-width: 768px) {
+  .metricsGrid { grid-template-columns: repeat(2,1fr); }
+  .chartsGrid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,108 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  transition: background var(--transition-normal), border-color var(--transition-normal), backdrop-filter var(--transition-normal);
+  border-bottom: 1px solid transparent;
+}
+.navbar.scrolled {
+  background: rgba(13, 17, 23, 0.85);
+  border-bottom-color: var(--border-subtle);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.navbarInner {
+  display: flex;
+  align-items: center;
+  height: 64px;
+  gap: var(--space-8);
+}
+
+/* Logo */
+.logo { display: flex; align-items: center; gap: var(--space-2); text-decoration: none; }
+.logoMark {
+  width: 32px; height: 32px;
+  background: var(--color-brand);
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-glow-brand);
+  flex-shrink: 0;
+}
+.logoText { font-size: 17px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.03em; }
+.logoBadge {
+  font-size: 10px; font-weight: 500; font-family: var(--font-mono);
+  color: var(--color-brand); background: rgba(91,110,247,0.12);
+  border: 1px solid rgba(91,110,247,0.3);
+  border-radius: var(--radius-full); padding: 1px 6px;
+  letter-spacing: 0.04em;
+}
+
+/* Desktop nav */
+.desktopNav { display: flex; align-items: center; gap: var(--space-1); flex: 1; }
+.navLink {
+  font-size: 14px; font-weight: 450; color: var(--text-secondary);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+.navLink:hover { color: var(--text-primary); background: var(--bg-surface); }
+
+.navActions { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; }
+
+/* Mobile hamburger */
+.mobileMenuButton {
+  display: none;
+  width: 40px; height: 40px;
+  background: transparent; border: none; cursor: pointer;
+  align-items: center; justify-content: center;
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+.mobileMenuButton:hover { background: var(--bg-surface); }
+
+.hamburger {
+  display: block; width: 20px; height: 2px;
+  background: var(--text-primary); border-radius: 2px;
+  position: relative; transition: background var(--transition-fast);
+}
+.hamburger::before,
+.hamburger::after {
+  content: ""; position: absolute; left: 0;
+  width: 20px; height: 2px; background: var(--text-primary);
+  border-radius: 2px; transition: transform var(--transition-normal);
+}
+.hamburger::before { top: -6px; }
+.hamburger::after  { top: 6px; }
+.hamburger.open { background: transparent; }
+.hamburger.open::before { transform: translateY(6px) rotate(45deg); }
+.hamburger.open::after  { transform: translateY(-6px) rotate(-45deg); }
+
+/* Mobile nav */
+.mobileNav {
+  display: flex; flex-direction: column; gap: var(--space-1);
+  background: var(--bg-surface); border-bottom: 1px solid var(--border-subtle);
+  padding: var(--space-4) var(--section-padding-x) var(--space-6);
+  animation: slideDown 0.2s ease;
+}
+.mobileNavLink {
+  font-size: 16px; color: var(--text-secondary); text-decoration: none;
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+.mobileNavLink:hover { color: var(--text-primary); background: var(--bg-panel); }
+.mobileNavCta { margin-top: var(--space-4); }
+.mobileNavCta button { width: 100%; justify-content: center; }
+
+@keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 768px) {
+  .desktopNav { display: none; }
+  .mobileMenuButton { display: flex; }
+  .navActions > button:first-child { display: none; }
+}

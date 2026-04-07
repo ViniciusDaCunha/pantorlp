@@ -1,0 +1,73 @@
+.section { background: var(--bg-deep); overflow: hidden; opacity: 0; transform: translateY(20px); transition: opacity 3.6s ease, transform 3.6s ease; }
+
+.sectionHeader { text-align: center; max-width: 680px; margin: 0 auto var(--space-12); }
+.sectionEyebrow {
+  display: inline-block; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--color-error); margin-bottom: var(--space-4);
+}
+.sectionTitle { font-size: clamp(28px,4vw,42px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: var(--space-4); }
+.sectionSubtitle { font-size: 16px; color: var(--text-secondary); line-height: 1.7; }
+
+/* Stats */
+.statsRow {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: var(--space-4); margin-bottom: var(--space-10);
+}
+.statCard {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl); padding: var(--space-6);
+  text-align: center;
+  transition: border-color var(--transition-normal);
+}
+.statCard:hover { border-color: var(--border-default); }
+.statValue { display: block; font-size: 36px; font-weight: 700; color: var(--color-error); letter-spacing: -0.03em; margin-bottom: var(--space-2); }
+.statLabel { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+
+/* Problem cards */
+.problemsGrid {
+  display: grid; grid-template-columns: repeat(2,1fr);
+  gap: var(--space-4); margin-bottom: var(--space-10);
+}
+.problemCard {
+  display: flex; gap: var(--space-4);
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl); padding: var(--space-6);
+  transition: border-color var(--transition-normal), transform var(--transition-normal);
+}
+.problemCard:hover { border-color: rgba(239,68,68,0.3); transform: translateY(-2px); }
+.problemCardIcon { font-size: 28px; flex-shrink: 0; line-height: 1; }
+.problemCardContent { display: flex; flex-direction: column; gap: var(--space-2); }
+.problemCardTitle { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.problemCardDescription { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+.problemCardPain {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-size: 12px; font-weight: 500;
+  color: var(--color-error); margin-top: var(--space-1);
+}
+.painDot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-error); flex-shrink: 0; }
+
+/* Cycle */
+.cycleVisual {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl); padding: var(--space-6); text-align: center;
+}
+.cycleLabel { font-size: 12px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: var(--space-4); }
+.cycleSteps { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: var(--space-2); }
+.cycleStep {
+  font-size: 13px; font-weight: 500; color: var(--text-secondary);
+  background: var(--bg-panel); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); padding: var(--space-2) var(--space-3);
+}
+.cycleArrow { color: var(--color-error); font-size: 14px; }
+
+@media (max-width: 1024px) {
+  .statsRow { grid-template-columns: repeat(3,1fr); }
+}
+@media (max-width: 768px) {
+  .statsRow { grid-template-columns: 1fr; }
+  .problemsGrid { grid-template-columns: 1fr; }
+  .sectionTitle { font-size: 28px; }
+  .cycleSteps { flex-direction: column; }
+  .cycleArrow { transform: rotate(90deg); }
+}
