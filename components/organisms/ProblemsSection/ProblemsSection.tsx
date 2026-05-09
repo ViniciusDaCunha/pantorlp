@@ -5,11 +5,12 @@ import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Icon } from "@/components/atoms/Icon/Icon";
 
 const PROBLEMS = [
-  {
-    icon: "hourglass",
-    title: "Ciclos longos de validação",
-    description: "Mudanças chegam ao usuário sem feedback real de produção. O time só descobre que algo está errado quando o usuário reclama — ou quando o sistema para.",
-    pain: "Horas perdidas por incidente",
+
+   {
+    icon: "money",
+    title: "Custo imprevisível e crescente",
+    description: "Plataformas enterprise cobram por volume de dados sem transparência. A fatura chega no fim do mês e surpreende — para cima. Times pequenos ficam sem visibilidade por falta de orçamento.",
+    pain: "Fatura surpresa todo mês",
   },
   {
     icon: "folder",
@@ -18,10 +19,10 @@ const PROBLEMS = [
     pain: "3 ferramentas para 1 resposta",
   },
   {
-    icon: "money",
-    title: "Custo imprevisível e crescente",
-    description: "Plataformas enterprise cobram por volume de dados sem transparência. A fatura chega no fim do mês e surpreende — para cima. Times pequenos ficam sem visibilidade por falta de orçamento.",
-    pain: "Fatura surpresa todo mês",
+    icon: "hourglass",
+    title: "Ciclos longos de validação",
+    description: "Mudanças chegam ao usuário sem feedback real de produção. O time só descobre que algo está errado quando o usuário reclama — ou quando o sistema para.",
+    pain: "Horas perdidas por incidente",
   },
   {
     icon: "construction",

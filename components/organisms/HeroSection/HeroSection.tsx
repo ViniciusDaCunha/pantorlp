@@ -58,10 +58,7 @@ export function HeroSection() {
       <div className={[styles.heroInner, "content-container"].join(" ")}>
         {/* Left: Copy */}
         <div className={styles.heroCopy}>
-          <div className={styles.heroAnnouncementBadge}>
-            <span className={styles.badgeDot} aria-hidden="true" />
-            Entrando em Early Access — Seja um dos primeiros
-          </div>
+          
 
           <h1 id="hero-heading" className={styles.heroHeading}>
             Produção é onde o<br />
@@ -69,7 +66,7 @@ export function HeroSection() {
           </h1>
 
           <p className={styles.heroSubtitle}>
-            Wide events substituem logs, métricas e traces em um único evento rico.
+            Observabilidade para Desenvolvedores. Wide events substituem logs, métricas e traces em um único evento rico que captura o contexto completo de cada request.
             Primeiro evento em produção em <strong>menos de 15 minutos</strong>.
             Custo previsível, zero silos.
           </p>
@@ -94,16 +91,17 @@ export function HeroSection() {
           <div className={styles.heroCtas}>
             <Button variant="primary" size="lg" onClick={handleWaitlistClick} aria-label="Entrar na lista de espera do Pantor">
               Entrar na Waitlist
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M4 8h8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                <path d="M9.5 3.5L14 8l-4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </Button>
             <Button variant="ghost" size="lg" onClick={handleLearnMoreClick} aria-label="Ver como funciona o Pantor">
               Ver como funciona
             </Button>
           </div>
 
-          <p className={styles.heroDisclaimer}>
-            Sem cartão de crédito · Grátis para começar · Cancele quando quiser
-          </p>
+        
         </div>
 
         {/* Right: Terminal */}

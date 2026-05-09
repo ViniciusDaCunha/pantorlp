@@ -27,13 +27,13 @@
   background: var(--color-brand);
   color: white;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 4px;
   border-radius: var(--radius-md);
   display: flex; align-items: center; justify-content: center;
   box-shadow: var(--shadow-glow-brand);
   flex-shrink: 0;
 }
-.logoText { font-size: 17px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.03em; }
+.logoText { font-size: 20px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.03em; }
 .logoBadge {
   font-size: 10px; font-weight: 500; font-family: var(--font-mono);
   color: var(--color-brand); background: rgba(91,110,247,0.12);

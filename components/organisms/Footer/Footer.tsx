@@ -37,12 +37,17 @@ export function Footer() {
               <a href="#" className={styles.footerLink}>Blog</a>
               <a href="mailto:hello@pantor.dev" className={styles.footerLink}>Contato</a>
             </div>
+           
+            {/*
             <div className={styles.footerLinkGroup}>
               <span className={styles.footerLinkGroupTitle}>Legal</span>
               <a href="#" className={styles.footerLink}>Privacidade</a>
               <a href="#" className={styles.footerLink}>Termos de Uso</a>
               <a href="#" className={styles.footerLink}>Cookies</a>
             </div>
+            */}
+            
+
           </nav>
         </div>
 

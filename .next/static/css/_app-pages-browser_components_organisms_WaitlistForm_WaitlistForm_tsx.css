@@ -2,12 +2,7 @@
   !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[3]!./components/organisms/WaitlistForm/WaitlistForm.module.css ***!
   \*****************************************************************************************************************************************************************************************************************************************************************************************************/
 .WaitlistForm_section__Wr5dA { position: relative; background: var(--bg-deep); overflow: hidden; opacity: 0; transition: opacity 3.6s ease; }
-.WaitlistForm_sectionGlow__NFkC_ {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 600px; height: 400px;
-  background: radial-gradient(ellipse, rgba(91,110,247,0.12) 0%, transparent 70%);
-  pointer-events: none;
-}
+
 
 .WaitlistForm_waitlistWrapper__NscwQ {
   display: grid; grid-template-columns: 1fr 1fr;

@@ -33,7 +33,7 @@ type:payment.failed amount:>100 region:BR
 trace_id:5d8e4f2a...`,
   },
   {
-    icon: "rocket",
+    icon: "clock",
     color: "brand",
     title: "Setup em menos de 15 minutos",
     description: "Uma linha de código e você começa. SDK com batching automático, retry com backoff e fila local. Eventos não se perdem mesmo com rede instável.",
@@ -45,7 +45,7 @@ pantor.init({ apiKey: 'pk_live_...' })
 // Pronto. Você já tem observabilidade.`,
   },
   {
-    icon: "plug",
+    icon: "folder",
     color: "brand",
     title: "OpenTelemetry nativo — sem reescrever nada",
     description: "Já usa OTLP? Aponte seu Collector existente para o endpoint do Pantor. Zero reescrita de instrumentação. Compatível com o ecossistema OTel completo.",
@@ -59,11 +59,13 @@ exporters:
 ];
 
 const LOOP_STEPS: Array<{ step: string; icon: IconName; description: string }> = [
-  { step: "Deploy", icon: "ship", description: "Você faz um deploy" },
-  { step: "Captura", icon: "satellite", description: "Pantor captura wide events" },
+  { step: "Deploy", icon: "cloud", description: "Você faz um deploy" },
+  { step: "Captura", icon: "capture", description: "Pantor captura wide events" },
   { step: "Consulta", icon: "search", description: "Você busca e analisa" },
   { step: "Valida", icon: "check", description: "Valida o comportamento real" },
   { step: "Itera", icon: "sync", description: "Itera com confiança" },
+
+  
 ];
 
 export function SolutionsSection() {
@@ -123,11 +125,11 @@ export function SolutionsSection() {
         {/* Quote */}
         <figure className={styles.quoteBlock}>
           
-          <blockquote className={styles.quote}>
-             O código descreve a intenção. A telemetria descreve a realidade.
-            O Pantor é a ponte entre os dois.
+          <blockquote className={styles.quote}> 
+            O código descreve a intenção. A telemetria descreve a realidade.
+            Pantor é a ponte entre os dois.
           </blockquote>
-          <figcaption className={styles.quoteAuthor}>— Filosofia do Pantor</figcaption>
+          
         </figure>
       </div>
     </section>

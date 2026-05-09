@@ -17,6 +17,7 @@ const WaitlistForm = dynamic(
 );
 
 import { Footer } from "@/components/organisms/Footer/Footer";
+import FAQ from "@/components/organisms/FAQ/FAQ";
 
 export default function LandingPage() {
   return (
@@ -28,6 +29,7 @@ export default function LandingPage() {
         <SolutionsSection />
         <PricingCalculator />
         <WaitlistForm />
+        <FAQ/>
       </main>
       <Footer />
     </>

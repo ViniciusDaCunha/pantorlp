@@ -44,6 +44,11 @@ create policy "allow_public_insert_events" on public.visitor_events
 create policy "deny_public_select_events" on public.visitor_events
   for select to anon using (false);
 
+-- GIN index for efficient JSONB metadata queries (plan CTA click filtering)
+-- Required before plan_cta_clicks_by_plan() to avoid full table scans at volume
+create index if not exists idx_visitor_events_metadata_gin
+  on public.visitor_events using gin(metadata);
+
 -- ─── Admin function: conversions_by_day ────────────────────────────────────────
 create or replace function public.conversions_by_day()
 returns table(date text, leads bigint)
@@ -56,4 +61,40 @@ as $$
   where created_at >= now() - interval '30 days'
   group by 1
   order by 1;
+$$;
+
+-- ─── Admin function: plan_cta_clicks_by_plan ───────────────────────────────────
+-- Returns click counts per pricing plan — used to identify which plan
+-- attracts the most interest before waitlist conversion.
+-- No PII is stored: planName is a product attribute (e.g. "Starter"), never a user attribute.
+create or replace function public.plan_cta_clicks_by_plan()
+returns table(plan text, clicks bigint)
+language sql security definer
+as $$
+  select
+    metadata->>'plan'    as plan,
+    count(*)             as clicks
+  from public.visitor_events
+  where event_type = 'cta_click'
+    and metadata->>'plan' is not null
+  group by 1
+  order by 2 desc;
+$$;
+
+-- ─── Admin function: plan_cta_clicks_by_day ────────────────────────────────────
+-- Time-series view: plan CTA clicks per day (last 30 days) for trend analysis.
+create or replace function public.plan_cta_clicks_by_day()
+returns table(date text, plan text, clicks bigint)
+language sql security definer
+as $$
+  select
+    to_char(created_at::date, 'YYYY-MM-DD') as date,
+    metadata->>'plan'                        as plan,
+    count(*)                                 as clicks
+  from public.visitor_events
+  where event_type = 'cta_click'
+    and metadata->>'plan' is not null
+    and created_at >= now() - interval '30 days'
+  group by 1, 2
+  order by 1, 2;
 $$;

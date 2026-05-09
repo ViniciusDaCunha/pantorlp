@@ -1,10 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import type { WaitlistFormData, WaitlistSubmitResult, VisitorEventType } from "@/types";
 
+
 // ─── Client ───────────────────────────────────────────────────────────────────
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
 
 export const supabase =
   supabaseUrl && supabaseAnonKey
@@ -14,6 +15,8 @@ export const supabase =
 export function isSupabaseConfigured(): boolean {
   return Boolean(supabaseUrl && supabaseAnonKey);
 }
+
+
 
 // ─── Waitlist ─────────────────────────────────────────────────────────────────
 
@@ -72,17 +75,64 @@ export async function trackEvent(
   }
 }
 
+// ─── Plan CTA Analytics ───────────────────────────────────────────────────────
+
+/**
+ * Tracks a click on a pricing plan CTA button.
+ *
+ * Delegates to trackEvent with structured plan metadata.
+ * LGPD: planName is a product attribute (e.g. "Starter"), never a user attribute.
+ * No PII is captured or inferred from this event.
+ */
+export async function trackPlanCtaClick(
+  planName: string,
+  sessionId: string | null
+): Promise<void> {
+  return trackEvent("cta_click", sessionId, {
+    plan: planName,
+    // source: "pricing_section" kept for future funnel segmentation
+    source: "pricing_section",
+  });
+}
+
+/**
+ * Returns aggregated CTA click counts per plan (admin use only).
+ * Calls the plan_cta_clicks_by_plan() RPC defined in schema.sql.
+ */
+export async function getPlanCtaClickStats(): Promise<
+  { plan: string; clicks: number }[]
+> {
+  if (!supabase) return [];
+
+  try {
+    const { data, error } = await supabase.rpc("plan_cta_clicks_by_plan");
+    if (error) {
+      console.error("[Pantor] plan_cta_clicks_by_plan error:", error);
+      return [];
+    }
+    return (data ?? []).map((row: { plan: string; clicks: number }) => ({
+      plan: row.plan,
+      clicks: Number(row.clicks),
+    }));
+  } catch (err) {
+    console.error("[Pantor] plan_cta_clicks_by_plan exception:", err);
+    return [];
+  }
+}
+
 // ─── Admin Queries ────────────────────────────────────────────────────────────
 
 export async function getAdminMetrics() {
   if (!supabase) return null;
 
-  const [waitlistRes, visitorsRes, conversionsByDayRes, rolesRes] =
+  const [waitlistRes, visitorsRes, conversionsByDayRes, rolesRes, planClicksRes] =
     await Promise.allSettled([
       supabase.from("waitlist").select("id, role, created_at"),
       supabase.from("visitor_events").select("id, session_id, created_at").eq("event_type", "page_view"),
       supabase.rpc("conversions_by_day"),
       supabase.from("waitlist").select("role").not("role", "is", null),
+      // Plan CTA interest heatmap — see plan_cta_clicks_by_plan() in schema.sql
+      supabase.rpc("plan_cta_clicks_by_plan"),
     ]);
 
   const leads =
@@ -105,6 +155,15 @@ export async function getAdminMetrics() {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 5)
     .map(([role, count]) => ({ role, count }));
+
+  // Plan CTA interest: which plan CTA attracted the most clicks
+  const planCtaClicks: { plan: string; clicks: number }[] =
+    planClicksRes.status === "fulfilled"
+      ? (planClicksRes.value.data ?? []).map((row: { plan: string; clicks: number }) => ({
+          plan: row.plan,
+          clicks: Number(row.clicks),
+        }))
+      : [];
 
   const totalLeads = leads.length;
   const totalVisitors = Math.max(uniqueSessions, totalLeads);
@@ -138,5 +197,7 @@ export async function getAdminMetrics() {
     conversionRate,
     conversionsByDay,
     topRoles,
+    // Plan interest ranking: sorted by most CTA clicks — use in admin dashboard
+    planCtaClicks,
   };
 }

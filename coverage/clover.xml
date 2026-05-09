@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1778114967921" clover="3.2.0">
+  <project timestamp="1778114967921" name="All files">
+    <metrics statements="58" coveredstatements="56" conditionals="52" coveredconditionals="40" methods="14" coveredmethods="14" elements="124" coveredelements="110" complexity="0" loc="58" ncloc="58" packages="1" files="1" classes="1"/>
+    <file name="supabase.ts" path="/home/vini/Lp-Pantorv2/pantor-lp/lib/supabase.ts">
+      <metrics statements="58" coveredstatements="56" conditionals="52" coveredconditionals="40" methods="14" coveredmethods="14"/>
+      <line num="6" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="7" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="10" count="1" type="cond" truecount="3" falsecount="1"/>
+      <line num="15" count="1" type="cond" truecount="2" falsecount="0"/>
+      <line num="27" count="9" type="cond" truecount="1" falsecount="1"/>
+      <line num="28" count="0" type="stmt"/>
+      <line num="29" count="0" type="stmt"/>
+      <line num="32" count="9" type="stmt"/>
+      <line num="33" count="9" type="stmt"/>
+      <line num="39" count="8" type="cond" truecount="2" falsecount="0"/>
+      <line num="41" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="42" count="1" type="stmt"/>
+      <line num="44" count="1" type="stmt"/>
+      <line num="45" count="1" type="stmt"/>
+      <line num="48" count="6" type="stmt"/>
+      <line num="50" count="1" type="stmt"/>
+      <line num="51" count="1" type="stmt"/>
+      <line num="62" count="11" type="cond" truecount="1" falsecount="1"/>
+      <line num="64" count="11" type="stmt"/>
+      <line num="65" count="11" type="stmt"/>
+      <line num="88" count="5" type="stmt"/>
+      <line num="102" count="6" type="cond" truecount="1" falsecount="1"/>
+      <line num="104" count="6" type="stmt"/>
+      <line num="105" count="6" type="stmt"/>
+      <line num="106" count="5" type="cond" truecount="2" falsecount="0"/>
+      <line num="107" count="1" type="stmt"/>
+      <line num="108" count="1" type="stmt"/>
+      <line num="110" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="115" count="1" type="stmt"/>
+      <line num="116" count="1" type="stmt"/>
+      <line num="123" count="14" type="cond" truecount="1" falsecount="1"/>
+      <line num="126" count="14" type="stmt"/>
+      <line num="136" count="14" type="cond" truecount="3" falsecount="1"/>
+      <line num="138" count="14" type="cond" truecount="3" falsecount="1"/>
+      <line num="141" count="14" type="stmt"/>
+      <line num="144" count="14" type="stmt"/>
+      <line num="145" count="14" type="cond" truecount="1" falsecount="1"/>
+      <line num="146" count="14" type="cond" truecount="1" falsecount="1"/>
+      <line num="147" count="15" type="cond" truecount="2" falsecount="0"/>
+      <line num="151" count="14" type="stmt"/>
+      <line num="152" count="9" type="stmt"/>
+      <line num="154" count="10" type="stmt"/>
+      <line num="158" count="14" type="cond" truecount="1" falsecount="1"/>
+      <line num="159" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="165" count="14" type="stmt"/>
+      <line num="166" count="14" type="stmt"/>
+      <line num="168" count="14" type="cond" truecount="2" falsecount="0"/>
+      <line num="173" count="14" type="stmt"/>
+      <line num="174" count="14" type="stmt"/>
+      <line num="175" count="14" type="stmt"/>
+      <line num="176" count="420" type="stmt"/>
+      <line num="177" count="420" type="stmt"/>
+      <line num="178" count="420" type="stmt"/>
+      <line num="180" count="14" type="stmt"/>
+      <line num="181" count="12" type="stmt"/>
+      <line num="182" count="12" type="cond" truecount="2" falsecount="0"/>
+      <line num="185" count="420" type="stmt"/>
+      <line num="191" count="14" type="stmt"/>
+    </file>
+  </project>
+</coverage>

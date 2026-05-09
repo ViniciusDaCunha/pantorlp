@@ -1,0 +1,537 @@
+/* ============================================================
+   PantorFAQ.module.css
+   Pantor Design System — Dark Mode · JetBrains Mono + Inter
+   ============================================================ */
+
+/* ── Design Tokens ─────────────────────────────────────────── */
+.root {
+  /* Brand */
+  --brand: #5b6ef7;
+  --brand-dark: #3d51d4;
+  --brand-glow: rgba(91, 110, 247, 0.18);
+  --cyan: #00c9d4;
+
+  /* Backgrounds */
+  --bg-deep: #0d1117;
+  --bg-surface: #161b22;
+  --bg-panel: #1e2430;
+  --bg-hover: rgba(255, 255, 255, 0.03);
+
+  /* Borders */
+  --border: #2d3748;
+  --border-subtle: rgba(45, 55, 72, 0.6);
+  --border-strong: #3d4f6a;
+
+  /* Text */
+  --text-primary: #f0f4ff;
+  --text-secondary: #8b9dbf;
+  --text-muted: #4a5568;
+  --text-link: #7c8ff8;
+
+  /* Severity */
+  --fatal: #ff2d78;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --success: #22c55e;
+  --debug: #94a3b8;
+
+  /* Callout backgrounds */
+  --callout-tip-bg: rgba(34, 197, 94, 0.07);
+  --callout-tip-border: #22c55e;
+  --callout-warn-bg: rgba(245, 158, 11, 0.07);
+  --callout-warn-border: #f59e0b;
+  --callout-info-bg: rgba(91, 110, 247, 0.08);
+  --callout-info-border: #5b6ef7;
+
+  /* Typography */
+  --font-ui: 'Inter', 'system-ui', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 999px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Shadows */
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+
+  /* ─────── Layout ─────── */
+  font-family: var(--font-sans);
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.header {
+  margin-bottom: var(--space-8);
+  text-align: center;
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: var(--space-4);}
+
+.subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Search ─────────────────────────────────────────────────── */
+.searchWrap {
+  position: relative;
+  margin-bottom: var(--space-5);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 9px 36px 9px 34px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  appearance: none;
+}
+
+.searchInput::placeholder {
+  color: var(--text-muted);
+}
+
+.searchInput:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-glow);
+}
+
+.searchClear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: var(--bg-panel);
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  padding: 0;
+}
+
+.searchClear:hover {
+  color: var(--text-primary);
+  background: var(--border);
+}
+
+/* ── Category Tabs ──────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--space-6);
+}
+
+.tab {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  border: 0.5px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.tabActive {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #ffffff;
+}
+
+.tabActive:hover {
+  background: var(--brand-dark);
+  border-color: var(--brand-dark);
+  color: #ffffff;
+}
+
+/* ── Sections ───────────────────────────────────────────────── */
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.section {
+  /* intentionally empty — children handle spacing */
+}
+
+.sectionLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+
+/* ── Accordion Item ─────────────────────────────────────────── */
+.itemList {
+  /* top border handled by first item */
+}
+
+.item {
+  border-top: 0.5px solid var(--border-subtle);
+}
+
+.item:last-child {
+  border-bottom: 0.5px solid var(--border-subtle);
+}
+
+/* ── Question button ─────────────────────────────── */
+.question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  padding: 15px 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-ui);
+  transition: background 0.1s;
+}
+
+.question:hover .questionText {
+  color: var(--text-primary);
+}
+
+.question:focus-visible {
+  outline: none;
+}
+
+.question:focus-visible .questionText {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.questionText {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  flex: 1;
+  transition: color 0.15s;
+}
+
+.itemOpen .questionText {
+  color: var(--text-primary);
+}
+
+/* Icon — +/× toggle */
+.icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0.5px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-muted);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.itemOpen .icon {
+  transform: rotate(45deg);
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #ffffff;
+}
+
+/* ── Answer — smooth grid expand ───────────────── */
+.answerWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.itemOpen .answerWrap {
+  grid-template-rows: 1fr;
+}
+
+.answerInner {
+  overflow: hidden;
+}
+
+.answerContent {
+  padding-bottom: 18px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.72;
+}
+
+/* Rich content inside answers */
+.answerContent p {
+  margin: 0 0 10px;
+}
+
+.answerContent p:last-child {
+  margin-bottom: 0;
+}
+
+.answerContent strong {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.answerContent em {
+  font-style: italic;
+}
+
+/* inline code */
+.answerContent code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-panel);
+  border: 0.5px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  color: var(--cyan);
+  letter-spacing: 0;
+}
+
+/* ── Callouts (inside answerContent via dangerouslySetInnerHTML) */
+.answerContent :global(.callout) {
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: 10px 14px;
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  border-left-width: 2px;
+  border-left-style: solid;
+}
+
+.answerContent :global(.callout-tip) {
+  background: var(--callout-tip-bg);
+  border-left-color: var(--callout-tip-border);
+}
+
+.answerContent :global(.callout-warn) {
+  background: var(--callout-warn-bg);
+  border-left-color: var(--callout-warn-border);
+}
+
+.answerContent :global(.callout-info) {
+  background: var(--callout-info-bg);
+  border-left-color: var(--callout-info-border);
+}
+
+/* ── Comparison grid ─────────────────────────────────── */
+.answerContent :global(.comparison-grid) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.answerContent :global(.comparison-cell) {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border-subtle);
+  font-size: 13px;
+  line-height: 1.6;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+.answerContent :global(.comparison-cell--highlight) {
+  border-color: rgba(91, 110, 247, 0.3);
+  background: rgba(91, 110, 247, 0.06);
+}
+
+.answerContent :global(.cell-label) {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.answerContent :global(.comparison-cell--highlight .cell-label) {
+  color: var(--brand);
+}
+
+/* ── Badges ──────────────────────────────────────────── */
+.answerContent :global(.badge) {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  margin-right: 6px;
+  letter-spacing: 0.02em;
+}
+
+.answerContent :global(.badge-neutral) {
+  background: var(--bg-panel);
+  border: 0.5px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.answerContent :global(.badge-success) {
+  background: rgba(34, 197, 94, 0.1);
+  border: 0.5px solid rgba(34, 197, 94, 0.3);
+  color: var(--success);
+}
+
+.answerContent :global(.badge-warn) {
+  background: rgba(245, 158, 11, 0.1);
+  border: 0.5px solid rgba(245, 158, 11, 0.3);
+  color: var(--warning);
+}
+
+/* ── No results ─────────────────────────────────────────────── */
+.noResults {
+  text-align: center;
+  padding: 48px 0;
+}
+
+.noResultsText {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 6px;
+}
+
+.noResultsHint {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.footer {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 0.5px solid var(--border-subtle);
+  text-align: center;
+}
+
+.footerText {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.footerLink {
+  color: var(--text-link);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footerLink:hover {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .root {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .answerContent :global(.comparison-grid) {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs {
+    gap: 5px;
+  }
+
+  .tab {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .answerWrap,
+  .icon,
+  .tab,
+  .searchInput,
+  .questionText {
+    transition: none;
+  }
+}
