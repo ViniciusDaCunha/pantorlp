@@ -38,6 +38,7 @@ export function Footer() {
               <a href="mailto:hello@pantor.dev" className={styles.footerLink}>Contato</a>
             </div>
            
+
             {/*
             <div className={styles.footerLinkGroup}>
               <span className={styles.footerLinkGroupTitle}>Legal</span>
