@@ -62,12 +62,17 @@ export interface PantorPlan {
   price: number;
   eventsM: number;   // millions
   retentionDays: number;
-  seats: string; // "ilimitados" or number
-  alerts: string; // "5 alertas" or "ilimitados"
-  support: string; // "email", "email prioritário", "slack dedicado"
   highlighted?: boolean;
   badge?: string;
   custom?: boolean; // for enterprise
+  storageGB: number;
+  defaultHosts: number;
+}
+
+export interface PlanFeatures {
+  seats: string;
+  alerts: string;
+  support: string;
 }
 
 export interface PricingComparison {
