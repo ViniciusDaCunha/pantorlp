@@ -419,9 +419,6 @@ export default function PantorFAQ() {
         ) : (
           <div className={styles.noResults}>
             <p className={styles.noResultsText}>Nenhuma pergunta encontrada.</p>
-            <p className={styles.noResultsHint}>
-              Tente termos como "overage", "SDK" ou "retenção".
-            </p>
           </div>
         )}
       </div>

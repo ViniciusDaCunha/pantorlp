@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/atoms/Button/Button";
 import styles from "./Navbar.module.css";
+import Link from 'next/link'
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -24,9 +25,9 @@ export function Navbar() {
     <header className={[styles.navbar, isScrolled ? styles.scrolled : ""].join(" ")} role="banner">
       <div className={[styles.navbarInner, "content-container"].join(" ")}>
         {/* Logo */}
-        <a href="/" className={styles.logo} aria-label="Pantor - Página inicial">
+        <Link href="/" className={styles.logo} aria-label="Pantor - Página inicial">
           <span className={styles.logoText}>Pantor</span>
-        </a>
+        </Link>
 
         {/* Desktop nav */}
         <nav className={styles.desktopNav} aria-label="Navegação principal">
