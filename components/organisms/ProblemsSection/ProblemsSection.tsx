@@ -3,8 +3,17 @@ import React from "react";
 import styles from "./ProblemsSection.module.css";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Icon } from "@/components/atoms/Icon/Icon";
+import {IconName} from "@/components/atoms/Icon/Icon";
 
-const PROBLEMS = [
+interface Problem {
+  icon: IconName;
+  title: string;
+  description: string;
+  pain: string;
+} 
+
+
+const PROBLEMS: Problem[] = [
 
    {
     icon: "money",
