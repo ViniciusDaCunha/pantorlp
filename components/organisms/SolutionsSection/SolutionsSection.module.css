@@ -72,9 +72,122 @@
 .quote::after  { content: close-quote; color: var(--color-brand); font-size: 1.4em; line-height: 0; vertical-align: -0.4em; }
 .quoteAuthor { font-size: 13px; color: var(--text-muted); font-style: normal; }
 
+@media (max-width: 1024px) {
+  .solutionsGrid {
+    gap: var(--space-6);
+  }
+
+  .solutionCard,
+  .solutionCodeBlock,
+  .loopStep {
+    min-width: 0;
+  }
+
+  .solutionTitle {
+    font-size: 28px;
+  }
+
+  .solutionDescription {
+    font-size: 15px;
+  }
+}
+
 @media (max-width: 768px) {
-  .solutionsGrid { grid-template-columns: 1fr; }
-  .loopSteps { flex-direction: column; align-items: center; }
-  .loopArrow { transform: rotate(90deg); margin: 0; }
-  .solutionCodeBlock { font-size: 11px; }
+  .solutionsSection {
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-10);
+  }
+
+  .solutionsGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .solutionCard {
+    width: 100%;
+    min-width: 0;
+    padding: var(--space-4);
+  }
+
+  .solutionHeader {
+    gap: var(--space-3);
+  }
+
+  .solutionTitle {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .solutionDescription {
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: none;
+  }
+
+  .solutionFeatures {
+    gap: var(--space-2);
+  }
+
+  .solutionFeature {
+    min-width: 0;
+    font-size: 13px;
+  }
+
+  .solutionCodeWrapper {
+    width: 100%;
+    max-width: calc(100vw - 32px);
+    overflow: hidden;
+    justify-self: center;
+  }
+
+  .solutionCodeBlock {
+    width: 100%;
+    min-width: 0;
+    font-size: 11px;
+    line-height: 1.5;
+    overflow-x: auto;
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .loopSteps {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-4);
+  }
+
+  .loopStep {
+    width: 100%;
+    min-width: 0;
+    padding: var(--space-4);
+    text-align: center;
+  }
+
+  .loopStepTitle {
+    font-size: 16px;
+  }
+
+  .loopStepDescription {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .loopArrow {
+    transform: rotate(90deg);
+    margin: 0;
+    align-self: center;
+  }
+
+  .loopArrow svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .solutionFooter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
 }
