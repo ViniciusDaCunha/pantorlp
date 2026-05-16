@@ -248,161 +248,28 @@
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .heroInner {
-    gap: var(--space-10);
-  }
-
-  .heroHeading {
-    font-size: 38px;
-  }
-
-  .heroTerminalWrapper,
-  .terminal {
-    min-width: 0;
-  }
+  .heroInner { gap: var(--space-10); }
+  .heroHeading { font-size: 38px; }
 }
 
 @media (max-width: 768px) {
-  .hero {
-    min-height: auto;
-    padding-top: 80px;
-  }
-
+  .hero { min-height: auto; padding-top: 80px; }
   .heroInner {
     grid-template-columns: 1fr;
     gap: var(--space-8);
     padding-top: var(--space-10);
     padding-bottom: var(--space-10);
   }
-
-  .heroCopy {
-    gap: var(--space-4);
-  }
-
-  .heroHeading {
-    font-size: 32px;
-  }
-
-  .heroSubtitle {
-    font-size: 15px;
-    max-width: none;
-  }
-
-  .heroStats {
-    gap: var(--space-4);
-  }
-
-  .heroStatValue {
-    font-size: 18px;
-  }
-
-  .heroCtas {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-2);
-  }
-
-  .heroCtas button {
-    width: 100%;
-    min-height: 48px;
-    justify-content: center;
-  }
-
-  .heroTerminalWrapper {
-    width: 100%;
-    max-width: calc(100vw - 32px);
-    justify-self: center;
-    gap: var(--space-2);
-  }
-
-  .terminal {
-    width: 100%;
-    min-width: 0;
-    font-size: 12px;
-  }
-
-  .terminalTitleBar {
-    padding: var(--space-3);
-  }
-
-  .trafficDot {
-    width: 10px;
-    height: 10px;
-  }
-
-  .terminalTitle {
-    font-size: 10px;
-    margin-left: 0;
-  }
-
-  .terminalBody {
-    min-height: 210px;
-    max-height: 240px;
-    padding: var(--space-3);
-    overflow: hidden;
-  }
-
-  .terminalPromptLine {
-    min-width: 0;
-    margin-bottom: var(--space-3);
-  }
-
-  .promptText {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .eventLines {
-    gap: 6px;
-  }
-
-  .eventLine {
-    min-width: 0;
-    font-size: 11px;
-    gap: var(--space-2);
-  }
-
-  .eventTimestamp {
-    display: none;
-  }
-
-  .eventType {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .eventAttrs {
-    font-size: 10px;
-  }
-
-  .terminalFooter {
-    padding: var(--space-2) var(--space-3);
-  }
-
-  .terminalStats {
-    max-width: 50%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-align: right;
-  }
-
-  .sdkSnippetCard {
-    min-width: 0;
-    padding: var(--space-3);
-  }
-
-  .sdkSnippetLabel {
-    display: none;
-  }
-
-  .scrollIndicator {
-    display: none;
-  }
+  .heroCopy { gap: var(--space-4); }
+  .heroHeading { font-size: 32px; }
+  .heroSubtitle { font-size: 15px; max-width: none; }
+  .heroStats { gap: var(--space-4); }
+  .heroStatValue { font-size: 18px; }
+  .heroCtas { flex-direction: column; }
+  .heroCtas button { width: 100%; justify-content: center; }
+  .terminalBody { min-height: 220px; max-height: 260px; }
+  .eventLine { font-size: 11px; gap: var(--space-2); }
+  .eventTimestamp { display: none; }
+  .terminal { font-size: 12px; }
+  .scrollIndicator { display: none; }
 }
-
-

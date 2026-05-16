@@ -5,8 +5,11 @@
   right: 0;
   z-index: 100;
   transition: background var(--transition-normal), border-color var(--transition-normal), backdrop-filter var(--transition-normal);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid transparent;
+}
+.navbar.scrolled {
   background: rgba(13, 17, 23, 0.85);
+  border-bottom-color: var(--border-subtle);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -53,22 +56,15 @@
 .navActions { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; }
 
 /* Mobile hamburger */
-.mobileMenu {
-  display: none;
-  position: relative;
-}
-
 .mobileMenuButton {
-  display: flex;
+  display: none;
   width: 40px; height: 40px;
   background: transparent; border: none; cursor: pointer;
   align-items: center; justify-content: center;
   border-radius: var(--radius-md);
   transition: background var(--transition-fast);
-  list-style: none;
 }
 .mobileMenuButton:hover { background: var(--bg-surface); }
-.mobileMenuButton::-webkit-details-marker { display: none; }
 
 .hamburger {
   display: block; width: 20px; height: 2px;
@@ -83,17 +79,13 @@
 }
 .hamburger::before { top: -6px; }
 .hamburger::after  { top: 6px; }
-.mobileMenu[open] .hamburger { background: transparent; }
-.mobileMenu[open] .hamburger::before { transform: translateY(6px) rotate(45deg); }
-.mobileMenu[open] .hamburger::after  { transform: translateY(-6px) rotate(-45deg); }
+.hamburger.open { background: transparent; }
+.hamburger.open::before { transform: translateY(6px) rotate(45deg); }
+.hamburger.open::after  { transform: translateY(-6px) rotate(-45deg); }
 
 /* Mobile nav */
 .mobileNav {
   display: flex; flex-direction: column; gap: var(--space-1);
-  position: fixed;
-  top: 64px;
-  left: 0;
-  right: 0;
   background: var(--bg-surface); border-bottom: 1px solid var(--border-subtle);
   padding: var(--space-4) var(--section-padding-x) var(--space-6);
   animation: slideDown 0.2s ease;
@@ -105,12 +97,12 @@
 }
 .mobileNavLink:hover { color: var(--text-primary); background: var(--bg-panel); }
 .mobileNavCta { margin-top: var(--space-4); }
-.mobileNavCta a { width: 100%; justify-content: center; }
+.mobileNavCta button { width: 100%; justify-content: center; }
 
 @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 768px) {
   .desktopNav { display: none; }
-  .mobileMenu { display: block; }
-  .navActions > a:first-child { display: none; }
+  .mobileMenuButton { display: flex; }
+  .navActions > button:first-child { display: none; }
 }
