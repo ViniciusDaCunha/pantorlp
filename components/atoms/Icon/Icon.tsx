@@ -142,19 +142,24 @@ const iconPaths: Partial<Record<IconName, JSX.Element>> = {
     </>
   ),
   celebration: <path d="M12 2l2.5 7H22l-5.5 4 2.5 7L12 16l-6.5 4 2.5-7L2 9h7.5L12 2z" fill="currentColor" />,
-  capture: (
-    <path
-      d="m12.47 4.6c3.41 3.36 3.41 7.88 0 11.24m-4.85-2.05c2.62-1.87 6.14-1.87 8.76 0m-4.75-9.24c-3.43 3.38-3.43 7.93 0 11.31m.34-11.31c-3.12.02-5.65 2.56-5.63 5.69.02 3.12 2.56 5.65 5.68 5.63 3.13-.02 5.65-2.56 5.63-5.69-.02-3.1-2.53-5.61-5.62-5.63h-.06zm.03 0v11.32m5.65-5.66H6.34m1.28-3.4c2.62 1.87 6.14 1.87 8.76 0"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  ),
 };
 
 export function Icon({ name, className = "", title }: IconProps) {
+  if (name === "capture") {
+    return (
+      <img
+        src="/capture.svg"
+        alt={title || "capture icon"}
+        className={className}
+        style={{ 
+          width: "56px", 
+          height: "24px",
+          filter: "brightness(0) invert(1)"
+        }}
+      />
+    );
+  }
+
   const iconPath = iconPaths[name] ?? <></>;
 
   return (
