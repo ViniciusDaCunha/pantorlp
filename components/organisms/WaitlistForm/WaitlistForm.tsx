@@ -4,7 +4,6 @@ import { Button } from "@/components/atoms/Button/Button";
 import { useWaitlistForm } from "@/hooks/useWaitlistForm";
 import type { DeveloperRole } from "@/types";
 import styles from "./WaitlistForm.module.css";
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Icon, type IconName } from "@/components/atoms/Icon/Icon";
 
 const ROLE_OPTIONS: { value: DeveloperRole; label: string }[] = [
@@ -75,10 +74,8 @@ export function WaitlistForm() {
     isSuccess,
     isError,
   } = useWaitlistForm();
-  const ref = useIntersectionObserver("visible");
   return (
     <section
-      ref={ref}
       id="waitlist"
       className={styles.section}
       aria-labelledby="waitlist-heading"

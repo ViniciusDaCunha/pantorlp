@@ -1,12 +1,10 @@
 import React from "react";
 import styles from "./Footer.module.css";
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 
 export function Footer() {
-  const ref = useIntersectionObserver('visible');
   const currentYear = new Date().getFullYear();
   return (
-    <footer ref={ref} className={styles.footer} role="contentinfo">
+    <footer className={styles.footer} role="contentinfo">
       <div className={["content-container"].join(" ")}>
         <div className={styles.footerMain}>
           {/* Brand */}
@@ -35,7 +33,7 @@ export function Footer() {
               <span className={styles.footerLinkGroupTitle}>Empresa</span>
               <a href="#" className={styles.footerLink}>Sobre nós</a>
               <a href="#" className={styles.footerLink}>Blog</a>
-              <a href="mailto:hello@pantor.dev" className={styles.footerLink}>Contato</a>
+              <a href="dacunhavini@gmail.com" className={styles.footerLink}>Contato</a>
             </div>
            
 

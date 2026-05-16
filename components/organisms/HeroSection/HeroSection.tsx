@@ -1,13 +1,43 @@
-"use client";
 import React from "react";
-import { Button } from "@/components/atoms/Button/Button";
 import { LevelBadge } from "@/components/atoms/LevelBadge/LevelBadge";
-import { useTerminalAnimation } from "@/hooks/useTerminalAnimation";
 import type { EventLevel } from "@/types";
 import styles from "./HeroSection.module.css";
+import buttonStyles from "@/components/atoms/Button/Button.module.css";
+
+const TERMINAL_EVENTS = [
+  {
+    timestamp: "10:30:01.234",
+    level: "INFO",
+    eventType: "payment.succeeded",
+    attrs: "user_id=usr_abc123 amount=150.00 currency=BRL duration_ms=342",
+  },
+  {
+    timestamp: "10:30:01.891",
+    level: "ERROR",
+    eventType: "payment.failed",
+    attrs: "user_id=usr_xyz789 error=INSUFFICIENT_FUNDS duration_ms=1847 retry=2",
+  },
+  {
+    timestamp: "10:30:02.103",
+    level: "INFO",
+    eventType: "user.login",
+    attrs: "user_id=usr_def456 ip=187.45.x.x region=BR duration_ms=89",
+  },
+  {
+    timestamp: "10:30:02.456",
+    level: "WARN",
+    eventType: "http.request.slow",
+    attrs: "path=/api/checkout duration_ms=2341 threshold=2000 status=200",
+  },
+  {
+    timestamp: "10:30:03.441",
+    level: "INFO",
+    eventType: "order.created",
+    attrs: "order_id=ord_9f2a4b plan=growth amount=290.00 duration_ms=156",
+  },
+] as const;
 
 function TerminalSimulator() {
-  const { visibleLines } = useTerminalAnimation({ intervalMs: 1500, maxLines: 7 });
   return (
     <div className={styles.terminal} role="region" aria-label="Simulador de wide events em tempo real">
       <div className={styles.terminalTitleBar}>
@@ -23,7 +53,7 @@ function TerminalSimulator() {
           <span className={styles.cursor} aria-hidden="true" />
         </div>
         <div className={styles.eventLines} aria-live="polite" aria-atomic="false">
-          {visibleLines.map((event, idx) => (
+          {TERMINAL_EVENTS.map((event, idx) => (
             <div key={`${event.eventType}-${idx}`} className={styles.eventLine} style={{ animationDelay: `${idx * 50}ms` }}>
               <span className={styles.eventTimestamp}>{event.timestamp}</span>
               <LevelBadge level={event.level as EventLevel} size="sm" />
@@ -42,13 +72,6 @@ function TerminalSimulator() {
 }
 
 export function HeroSection() {
-  const handleWaitlistClick = () => {
-    document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
-  };
-  const handleLearnMoreClick = () => {
-    document.getElementById("problems")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
     <section className={styles.hero} aria-labelledby="hero-heading">
       {/* Background decorations */}
@@ -89,16 +112,24 @@ export function HeroSection() {
           </div>
 
           <div className={styles.heroCtas}>
-            <Button variant="primary" size="lg" onClick={handleWaitlistClick} aria-label="Entrar na lista de espera do Pantor">
+            <a
+              href="#waitlist"
+              className={[buttonStyles.button, buttonStyles.primary, buttonStyles.lg].join(" ")}
+              aria-label="Entrar na lista de espera do Pantor"
+            >
               Entrar na Waitlist
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M4 8h8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                 <path d="M9.5 3.5L14 8l-4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </Button>
-            <Button variant="ghost" size="lg" onClick={handleLearnMoreClick} aria-label="Ver como funciona o Pantor">
+            </a>
+            <a
+              href="#problems"
+              className={[buttonStyles.button, buttonStyles.ghost, buttonStyles.lg].join(" ")}
+              aria-label="Ver como funciona o Pantor"
+            >
               Ver como funciona
-            </Button>
+            </a>
           </div>
 
         

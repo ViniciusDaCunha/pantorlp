@@ -1,7 +1,5 @@
-"use client";
 import React from "react";
 import styles from "./ProblemsSection.module.css";
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Icon } from "@/components/atoms/Icon/Icon";
 import {IconName} from "@/components/atoms/Icon/Icon";
 
@@ -48,9 +46,9 @@ const MARKET_STATS = [
 ];
 
 export function ProblemsSection() {
-  const ref = useIntersectionObserver('visible');
   return (
-    <section ref={ref} id="problems" className={styles.section} aria-labelledby="problems-heading">
+    <section id="problems" className={styles.section} aria-labelledby="problems-heading">
+
       <div className={["content-container", "section-padding"].join(" ")}>
 
         {/* Header */}
