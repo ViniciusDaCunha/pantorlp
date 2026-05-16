@@ -12,9 +12,9 @@
 
 /* Copy */
 .WaitlistForm_waitlistCopy__L6u4P { display: flex; flex-direction: column; gap: var(--space-6); }
-.WaitlistForm_sectionEyebrow__NNLZB { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-brand); }
-.WaitlistForm_sectionTitle__qujCF { font-size: clamp(28px,4vw,40px); font-weight: 700; letter-spacing: -0.02em; }
-.WaitlistForm_sectionSubtitle__ekF65 { font-size: 15px; color: var(--text-secondary); line-height: 1.7; }
+.WaitlistForm_sectionEyebrow__NNLZB { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-brand); text-align: center; }
+.WaitlistForm_sectionTitle__qujCF { font-size: clamp(28px,4vw,40px); font-weight: 700; letter-spacing: -0.02em; text-align: center; }
+.WaitlistForm_sectionSubtitle__ekF65 { font-size: 15px; color: var(--text-secondary); line-height: 1.7; text-align: center; }
 
 .WaitlistForm_benefitsList__qnqUa { display: flex; flex-direction: column; gap: var(--space-3); }
 .WaitlistForm_benefitItem__ei007 { display: flex; align-items: center; gap: var(--space-3); font-size: 14px; color: var(--text-secondary); }
