@@ -1,5 +1,5 @@
 /* ─── Section ─────────────────────────────────────────────────────────────── */
-.section { background: var(--bg-deep); opacity: 0; transition: opacity 3.6s ease; }
+.section { background: var(--bg-deep); opacity: 1; }
 
 .sectionHeader { text-align: center; max-width: 680px; margin: 0 auto var(--space-10); }
 .sectionEyebrow { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-success); margin-bottom: var(--space-4); }

@@ -63,10 +63,6 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
-        {/* Preload critical fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-
         {/* Structured data */}
         <script
           type="application/ld+json"

@@ -1,6 +1,5 @@
 import React from "react";
 import styles from "./SolutionsSection.module.css";
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Icon, type IconName } from "@/components/atoms/Icon/Icon";
 
 const SOLUTIONS: Array<{ icon: IconName; color: string; title: string; description: string; codeExample: string }> = [
@@ -69,9 +68,8 @@ const LOOP_STEPS: Array<{ step: string; icon: IconName; description: string }> =
 ];
 
 export function SolutionsSection() {
-  const ref = useIntersectionObserver('visible');
   return (
-    <section ref={ref} id="solutions" className={styles.section} aria-labelledby="solutions-heading">
+    <section id="solutions" className={styles.section} aria-labelledby="solutions-heading">
       <div className={[styles.sectionBg, "grid-bg"].join(" ")} aria-hidden="true" />
 
       <div className={["content-container", "section-padding"].join(" ")}>

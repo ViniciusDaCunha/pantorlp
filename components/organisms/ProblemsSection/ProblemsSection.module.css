@@ -1,4 +1,4 @@
-.section { background: var(--bg-deep); overflow: hidden; opacity: 0; transform: translateY(20px); transition: opacity 3.6s ease, transform 3.6s ease; }
+.section { background: var(--bg-deep); overflow: hidden; opacity: 1; transform: none; }
 
 .sectionHeader { text-align: center; max-width: 680px; margin: 0 auto var(--space-12); }
 .sectionEyebrow {
