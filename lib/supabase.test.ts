@@ -129,15 +129,24 @@ describe("isSupabaseConfigured", () => {
   });
 
   it("lógica pura: false quando URL está ausente", () => {
-    expect(Boolean("" && "some-key")).toBe(false);
+    const url: string = "";
+    const apiKey: string = "some-key";
+
+    expect(Boolean(url && apiKey)).toBe(false);
   });
 
   it("lógica pura: false quando key está ausente", () => {
-    expect(Boolean("https://x.supabase.co" && "")).toBe(false);
+    const url: string = "https://x.supabase.co";
+    const apiKey: string = "";
+
+    expect(Boolean(url && apiKey)).toBe(false);
   });
 
   it("lógica pura: false quando ambos estão ausentes", () => {
-    expect(Boolean("" && "")).toBe(false);
+    const url: string = "";
+    const apiKey: string = "";
+
+    expect(Boolean(url && apiKey)).toBe(false);
   });
 });
 
@@ -170,14 +179,14 @@ describe("submitWaitlist", () => {
   // ── Sanitização — cobertura 100% exigida (Guia §6.1) ──────────────────────
 
   it("email: toLowerCase + trim antes do insert (LGPD: sem fingerprint por case)", async () => {
-    await submitWaitlist({ email: "  DEV@Pantor.IO  ", role: "developer" });
+    await submitWaitlist({ email: "  DEV@Pantor.IO  ", role: "developer", company: "" });
 
     const payload = mockInsert.mock.calls[0][0] as Record<string, unknown>;
     expect(payload.email).toBe("dev@pantor.io");
   });
 
   it("company undefined → null (sem campo fantasma no banco)", async () => {
-    await submitWaitlist({ email: "a@b.com", role: "cto" });
+    await submitWaitlist({ email: "a@b.com", role: "cto", company: "" });
 
     const payload = mockInsert.mock.calls[0][0] as Record<string, unknown>;
     expect(payload.company).toBeNull();
@@ -195,7 +204,7 @@ describe("submitWaitlist", () => {
   it("código 23505 (unique violation) → { success: true, isDuplicate: true }", async () => {
     mockInsert.mockResolvedValue({ error: { code: "23505" } });
 
-    const result = await submitWaitlist({ email: "dup@pantor.io", role: "founder" });
+    const result = await submitWaitlist({ email: "dup@pantor.io", role: "founder", company: "" });
 
     expect(result).toEqual({ success: true, isDuplicate: true });
   });
@@ -207,7 +216,7 @@ describe("submitWaitlist", () => {
       error: { code: "42P01", message: "table not found" },
     });
 
-    const result = await submitWaitlist({ email: "a@b.com", role: "developer" });
+    const result = await submitWaitlist({ email: "a@b.com", role: "developer", company: "" });
 
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/Erro ao salvar/);
@@ -216,7 +225,7 @@ describe("submitWaitlist", () => {
   it("exception lançada → { success: false, error: mensagem de conexão }", async () => {
     mockInsert.mockRejectedValue(new Error("network timeout"));
 
-    const result = await submitWaitlist({ email: "a@b.com", role: "tech-lead" });
+    const result = await submitWaitlist({ email: "a@b.com", role: "tech-lead", company: "" });
 
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/Erro de conexão/);
@@ -536,13 +545,13 @@ describe("Invariantes LGPD — sanitização e ausência de PII", () => {
   });
 
   it("email lowercase — sem fingerprint por variação de maiúsculas", async () => {
-    await submitWaitlist({ email: "USUARIO@EMPRESA.COM.BR", role: "other" });
+    await submitWaitlist({ email: "USUARIO@EMPRESA.COM.BR", role: "other", company: "" });
     const payload = mockInsert.mock.calls[0][0] as Record<string, unknown>;
     expect(payload.email).toBe("usuario@empresa.com.br");
   });
 
   it("email trimado — espaços não criam registros duplicados lógicos", async () => {
-    await submitWaitlist({ email: "  dev@pantor.io  ", role: "developer" });
+    await submitWaitlist({ email: "  dev@pantor.io  ", role: "developer", company: "" });
     const payload = mockInsert.mock.calls[0][0] as Record<string, unknown>;
     expect((payload.email as string).trim()).toBe(payload.email);
     expect(payload.email).toBe("dev@pantor.io");
