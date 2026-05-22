@@ -1,0 +1,40 @@
+---
+title: "Observabilidade vs Monitoramento: qual a diferença real"
+description: "Monitoramento te diz se algo está errado. Observabilidade te diz por quê. Entenda a distinção e por que ela importa para times de produção modernos."
+author: "pantor-team"
+category: "observabilidade"
+tags:
+  - observabilidade
+  - monitoramento
+  - sre
+publishedAt: "2025-04-08"
+featured: false
+draft: false
+---
+
+## A distinção fundamental
+
+Monitoramento responde perguntas que você formulou antes do problema acontecer.
+Você configura alertas para métricas conhecidas — CPU acima de 80%, latência acima de 500ms.
+
+Observabilidade responde perguntas que você ainda não sabia que precisaria fazer.
+Quando um novo tipo de falha ocorre — e sempre ocorre — você consegue investigar sem
+precisar redeploy com mais instrumentação.
+
+## Os três pilares e seu limite
+
+A narrativa popular fala em logs, métricas e traces como os três pilares da observabilidade.
+Mas pilares são estruturas independentes. Observabilidade real precisa de correlação.
+
+Wide events são a resposta: em vez de três fluxos separados para correlacionar depois,
+você captura contexto correlacionado na origem.
+
+## O que isso significa na prática
+
+Um time com boa observabilidade consegue responder:
+
+- Qual percentual de requisições lentas vieram de usuários no plano gratuito?
+- Quais deploys correlacionam com aumento de erros 5xx?
+- Qual feature flag está associada a maior latência de banco?
+
+Essas perguntas requerem contexto — não apenas métricas isoladas.

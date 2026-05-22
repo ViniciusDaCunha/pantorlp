@@ -30,7 +30,7 @@ Requer aprovação de: Claude Code
 
 Aplicam-se a **todas** as tasks. Não estão repetidas individualmente.
 
-Modo: Especialista ML/LLM Eng/Arquitetura SW. Responda com máxima densidade, mínima verbosidade, foco técnico-operacional. Sem cortesias, introduções ou conclusões. Priorize precisão, trade-offs, gargalos, custo, escalabilidade.
+Modo: Especialista ML/LLM Eng/Arquitetura SW. Responda com máxima densidade, mínima verbosidade, foco técnico-operacional. Sem cortesias, introduções ou conclusões. Priorize precisão, trade-offs, gargalos, custo, escalabilidade. Use TDD internamente 
 
 ```
 ARQUITETURA:
@@ -90,10 +90,11 @@ ONDA 4 ────────────────────────�
   T09  lib/blog/reading-time.ts                     [depende: T04]
 
 ONDA 5 ─────────────────────────────────────────────────────────────
-  T07  contentlayer.config.ts                       [depende: T02, T03]
+ T07 · Criar velite.config.ts
+Depende: T02, T03 | Bloqueia: T08, T10, T11                     [depende: T02, T03]
 
 ONDA 6 ─────────────────────────────────────────────────────────────
-  T08  next.config.ts — diff withContentlayer       [depende: T07]
+  T08 · Atualizar next.config.ts — VeliteWebpackPlugin Depende: T07 | Bloqueia: T14
   T11  Posts MDX seed (3 arquivos)                  [depende: T07]
 
 ONDA 7 ─────────────────────────────────────────────────────────────
@@ -446,56 +447,41 @@ export type BlogTagParams      = { tag:       string };
 
 **Objetivo:** Pipeline de conteúdo MDX. Frontmatter inválido (campo obrigatório ausente) deve quebrar o build com mensagem clara. Slug derivado do caminho do arquivo — não do frontmatter.
 
-**Arquivo a criar:** `contentlayer.config.ts` (raiz do projeto — mesmo nível de `next.config.ts`)
+**Arquivo a criar:**  velite.config.ts (raiz do projeto)
 
-```typescript
-// contentlayer.config.ts
-// Pipeline MDX com validação de frontmatter em TypeScript.
-// Slug é computedField derivado do caminho — Single Source of Truth.
+import { defineConfig, defineCollection, s } from 'velite';
+import rehypePrettyCode                       from 'rehype-pretty-code';
+import remarkGfm                              from 'remark-gfm';
+import rehypeSlug                             from 'rehype-slug';
+import rehypeAutolinkHeadings                from 'rehype-autolink-headings';
 
-import { defineDocumentType, makeSource } from 'contentlayer/source-files';
-import rehypePrettyCode                   from 'rehype-pretty-code';
-import remarkGfm                          from 'remark-gfm';
-import rehypeSlug                         from 'rehype-slug';
-import rehypeAutolinkHeadings             from 'rehype-autolink-headings';
+const posts = defineCollection({
+  name:    'Post',
+  pattern: 'blog/**/*.mdx',
+  schema:  s.object({
+    title:       s.string(),
+    description: s.string(),
+    author:      s.string(),
+    category:    s.string(),
+    tags:        s.array(s.string()),
+    publishedAt: s.isodate(),
+    updatedAt:   s.isodate().optional(),
+    featured:    s.boolean().default(false),
+    draft:       s.boolean().default(false),
+    ogImage:     s.string().optional(),
+    seriesSlug:  s.string().optional(),
+    seriesPart:  s.number().optional(),
+  }).transform((data, { meta }) => ({
+    ...data,
+    slug: meta.path.replace(/^blog\//, '').replace(/\.mdx$/, ''),
+    url:  `/blog/${meta.path.replace(/^blog\//, '').replace(/\.mdx$/, '')}`,
+  })),
+});
 
-export const Post = defineDocumentType(() => ({
-  name:            'Post',
-  filePathPattern: 'blog/**/*.mdx',
-  contentType:     'mdx',
-
-  fields: {
-    // Obrigatórios — build falha se ausentes
-    title:       { type: 'string',  required: true  },
-    description: { type: 'string',  required: true  },
-    author:      { type: 'string',  required: true  },
-    category:    { type: 'string',  required: true  },
-    tags:        { type: 'list',    required: true,  of: { type: 'string' } },
-    publishedAt: { type: 'date',    required: true  },
-    // Opcionais
-    updatedAt:   { type: 'date',    required: false },
-    featured:    { type: 'boolean', required: false, default: false },
-    draft:       { type: 'boolean', required: false, default: false },
-    ogImage:     { type: 'string',  required: false },
-    seriesSlug:  { type: 'string',  required: false },
-    seriesPart:  { type: 'number',  required: false },
-  },
-
-  computedFields: {
-    slug: {
-      type:    'string',
-      resolve: (doc) => doc._raw.flattenedPath.replace('blog/', ''),
-    },
-    url: {
-      type:    'string',
-      resolve: (doc) => `/blog/${doc._raw.flattenedPath.replace('blog/', '')}`,
-    },
-  },
-}));
-
-export default makeSource({
-  contentDirPath: 'content',
-  documentTypes:  [Post],
+export default defineConfig({
+  root:        'content',
+  output:      { data: '.velite', clean: true },
+  collections: { posts },
   mdx: {
     remarkPlugins: [remarkGfm],
     rehypePlugins: [
@@ -512,59 +498,55 @@ export default makeSource({
       }],
     ],
   },
-}));
-```
+});
 
-**Acceptance criteria:**
-- [ ] Arquivo na raiz do projeto (não em `lib/` nem `src/`)
-- [ ] Campos `title`, `description`, `author`, `category`, `tags`, `publishedAt` são `required: true`
-- [ ] `slug` é computedField derivado de `_raw.flattenedPath`
-- [ ] Tema Shiki: `one-dark-pro`
-- [ ] `tsc --noEmit` passa
+Adicionar ao .gitignore:
+.velite
+Acceptance criteria:
 
-**Depends on:** T02, T03 | **Bloqueia:** T08, T10, T11
-
----
+ Arquivo na raiz (não em lib/ nem src/)
+ slug derivado de meta.path — não do frontmatter
+ Campos title, description, author, category, tags, publishedAt sem .optional() — build falha se ausentes
+ .velite no .gitignore
+ tsc --noEmit passa
 
 ### T08 · Atualizar next.config.ts — diff withContentlayer
 **Onda:** 6 | **Node:** N03 | **Agente:** Codex | **Prioridade:** BLOCKER
 
-**Objetivo:** Integrar Contentlayer ao Next.js. **Diff mínimo** — apenas as 3 linhas necessárias. Nenhuma config existente é alterada ou removida.
+Diff exato:
+diff+class VeliteWebpackPlugin {
++  static defaultOptions = { turbopack: false };
++  constructor(options = {}) {
++    Object.assign(this, { ...VeliteWebpackPlugin.defaultOptions, ...options });
++  }
++  apply(compiler: import('webpack').Compiler) {
++    const { build } = require('velite');
++    compiler.hooks.beforeCompile.tapPromise('VeliteWebpackPlugin', async () => {
++      await build({ watch: compiler.options.mode === 'development' });
++    });
++  }
++}
 
-**Mudanças exatas a aplicar:**
+ const nextConfig: NextConfig = {
+   // configs existentes intactas
++  pageExtensions: ['ts', 'tsx', 'mdx'],
++  webpack(config) {
++    config.plugins.push(new VeliteWebpackPlugin());
++    return config;
++  },
+ };
 
-```diff
-// Linha 1 — adicionar import:
-+ import { withContentlayer } from 'next-contentlayer';
+-export default nextConfig;
++export default nextConfig;  // SEM withContentlayer — Velite usa webpack hook direto
+Acceptance criteria:
 
-// Dentro do objeto nextConfig — adicionar:
-+ pageExtensions: ['ts', 'tsx', 'mdx'],
+ Zero imports de next-contentlayer
+ VeliteWebpackPlugin declarada antes do nextConfig
+ pageExtensions adicionado
+ Nenhuma config existente removida
+ tsc --noEmit passa
 
-// Última linha — alterar export:
-- export default nextConfig;
-+ export default withContentlayer(nextConfig);
-```
 
-**Resultado esperado (estrutura, não o arquivo completo):**
-
-```typescript
-import type { NextConfig }  from 'next';
-import { withContentlayer } from 'next-contentlayer';  // NOVO
-
-const nextConfig: NextConfig = {
-  // ... configs existentes intactas ...
-  pageExtensions: ['ts', 'tsx', 'mdx'],  // NOVO
-};
-
-export default withContentlayer(nextConfig);  // ALTERADO
-```
-
-**Acceptance criteria:**
-- [ ] Exatamente 3 mudanças: 1 import, 1 campo, 1 export
-- [ ] Nenhuma configuração existente removida ou alterada
-- [ ] `tsc --noEmit` passa
-
-**Depends on:** T07 | **Bloqueia:** T14 (build final)
 
 ---
 

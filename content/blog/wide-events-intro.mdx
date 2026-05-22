@@ -1,0 +1,47 @@
+---
+title: "O que são Wide Events e por que substituem logs isolados"
+description: "Wide events capturam o contexto completo de uma requisição em um único evento estruturado. Entenda por que isso muda como você observa produção."
+author: "pantor-team"
+category: "wide-events"
+tags:
+  - wide-events
+  - observabilidade
+  - opentelemetry
+publishedAt: "2025-04-01"
+featured: true
+draft: false
+---
+
+## O problema com logs isolados
+
+Quando um usuário reporta lentidão, a investigação típica começa assim: abrir o painel de métricas,
+depois os logs de aplicação, depois os traces — cada sistema em uma aba diferente, cada um com
+seu próprio formato, cada um com parte do contexto.
+
+Wide events resolvem isso capturando tudo em um único evento estruturado no momento em que acontece.
+
+## O que é um wide event
+
+Um wide event é um evento estruturado que carrega o contexto completo de uma operação.
+Em vez de emitir `request received`, `db query start`, `db query end` como eventos separados,
+você emite um único evento com todos esses campos:
+
+```json
+{
+  "trace_id": "abc123",
+  "endpoint": "POST /api/checkout",
+  "duration_ms": 342,
+  "db_queries": 3,
+  "db_duration_ms": 180,
+  "cache_hits": 2,
+  "status_code": 200
+}
+```
+
+## Por que isso importa para observabilidade
+
+Com eventos isolados, reconstruir o contexto de um incidente requer correlação manual entre
+sistemas diferentes. Com wide events, a resposta para "o que aconteceu nesta requisição"
+está em um único lugar.
+
+A Pantor foi construída em torno deste princípio.

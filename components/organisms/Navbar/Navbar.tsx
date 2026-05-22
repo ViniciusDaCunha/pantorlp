@@ -18,7 +18,7 @@ export function Navbar() {
     { href: "#problems", label: "O Problema" },
     { href: "#solutions", label: "A Solução" },
     { href: "#pricing", label: "Preços" },
-    { href: "#blog", label: "Blog" },
+    { href: "/blog", label: "Blog" },
   ];
 
   return (

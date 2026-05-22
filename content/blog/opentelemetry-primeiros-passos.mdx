@@ -1,0 +1,58 @@
+---
+title: "OpenTelemetry em produção: primeiros passos sem dor"
+description: "Guia prático para instrumentar uma aplicação Node.js com OpenTelemetry sem precisar reescrever seu código."
+author: "pantor-team"
+category: "opentelemetry"
+tags:
+  - opentelemetry
+  - nodejs
+  - instrumentacao
+publishedAt: "2025-04-15"
+featured: false
+draft: false
+seriesSlug: "guia-observabilidade"
+seriesPart: 1
+---
+
+## Por que OpenTelemetry
+
+OpenTelemetry é o padrão aberto para instrumentação — mantido pela CNCF, com suporte
+de todos os grandes vendors de observabilidade. Instrumentar com OTel significa que
+você pode trocar o backend sem reescrever a instrumentação.
+
+## Instalação mínima para Node.js
+
+```bash
+npm install @opentelemetry/sdk-node \
+  @opentelemetry/auto-instrumentations-node \
+  @opentelemetry/exporter-otlp-http
+```
+
+## Configuração básica
+
+```typescript
+// instrumentation.ts — carregado antes de qualquer outro módulo
+import { NodeSDK }                     from '@opentelemetry/sdk-node';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { OTLPTraceExporter }           from '@opentelemetry/exporter-otlp-http';
+
+const sdk = new NodeSDK({
+  traceExporter: new OTLPTraceExporter({
+    url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+  }),
+  instrumentations: [getNodeAutoInstrumentations()],
+});
+
+sdk.start();
+```
+
+## O que você ganha imediatamente
+
+Com auto-instrumentação ativada, você passa a ter traces automáticos de:
+
+- HTTP (req/res, headers, status codes)
+- Banco de dados (queries, duration, connection pool)
+- Redis/cache
+- Propagação de contexto entre serviços
+
+Sem escrever uma linha de instrumentação manual.
