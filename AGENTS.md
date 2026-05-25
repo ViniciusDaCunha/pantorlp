@@ -1,1201 +1,1378 @@
 # AGENTS.md — Pantor Blog × LP
-## Instruções de Execução para Agentes Codex
+## Fase 3 — SEO, Feeds, Newsletter + SRE Hardening
 
-> **Gerado por:** Claude Code (Agente Arquiteto)
-> **Fase ativa:** FASE 1 — Fundação
-> **Referência:** HELIX.md v1.0
-> **Objetivo da fase:** `next build` passa com zero erros. Posts MDX aparecem em `/blog`. Frontmatter incompleto quebra o build.
+> **Gerado por:** Claude Code | **Data:** 2026-05-22
+> **Fase ativa:** FASE 3 + SRE paralelo
+> **Referência:** HELIX.md v3.0
+> **Objetivo:** Blog indexável. RSS e sitemap ativos. Newsletter captura emails. Código das Fases 1–2 auditado e endurecido contra o Protocolo SRE.
 
 ---
 
-## LEIA ANTES DE EXECUTAR QUALQUER TASK
+## LEIA ANTES DE EXECUTAR
 
-### Você é um Agente Worker Codex
+### Duas frentes simultâneas nesta fase
 
-Sua função é **implementar** — não arquitetar. As decisões arquiteturais estão no HELIX.md. Se durante a implementação você encontrar um caso não coberto pelas especificações desta task:
+**Frente A — SRE Hardening:** refatora código existente (Fases 1–2) para conformidade com o Protocolo SRE do HELIX.md Seção 2.5. Tasks SRE-01 a SRE-05. Rodam na Onda 1, em paralelo com tasks funcionais independentes.
 
-1. **Pare**
-2. **Não improvise** arquitetura, nomes de módulos ou estrutura de pastas
-3. **Retorne um ADR draft** ao final da sua resposta:
+**Frente B — Funcional:** implementa SEO, RSS, OG, newsletter, sitemap.
+
+### Protocolo SRE — obrigatório em todas as tasks desta fase
+
+Qualquer código que você escrever ou modificar nesta fase deve seguir:
 
 ```
-## ADR-DRAFT-[N] · [Título Curto]
-Status: Draft — aguardando revisão Claude Code
-Contexto: [o que encontrei que não estava especificado]
-Decisão proposta: [o que fiz e por quê]
-Requer aprovação de: Claude Code
+SRE-P1  Route Handlers: validação de input antes de qualquer operação
+SRE-P2  Sanitização: sanitizeEmail(), sanitizeSlug() de lib/blog/sanitize.ts
+SRE-P3  Error Boundaries: Client Components que processam dados externos
+SRE-P4  Trust Boundary: Function(code) apenas para post.body do blogRepository
+SRE-P5  Headers: X-Content-Type-Options + Cache-Control em Route Handlers
+SRE-P6  Rate Limiting: 429 + Retry-After em endpoints de escrita
+SRE-P7  Logging: structured, sem PII — nunca logar email, body completo ou stack trace
+SRE-P8  Supabase: guard !supabase + sanitização antes de qualquer query
 ```
 
-### Constraints Globais — Nunca Violar
+Referência completa: HELIX.md Seção 2.5.
 
-Aplicam-se a **todas** as tasks. Não estão repetidas individualmente.
-
-Modo: Especialista ML/LLM Eng/Arquitetura SW. Responda com máxima densidade, mínima verbosidade, foco técnico-operacional. Sem cortesias, introduções ou conclusões. Priorize precisão, trade-offs, gargalos, custo, escalabilidade. Use TDD internamente 
+### Constraints Globais — nunca violar
 
 ```
 ARQUITETURA:
-  ✗ domain/ não pode importar NADA do projeto (nem Next.js, nem Supabase)
-  ✗ lib/blog/ não pode importar app/ nem components/
-  ✗ components/ não podem importar lib/ diretamente
-  ✓ Direção: domain → lib/blog → app/blog + components
+  ✗ Nenhum arquivo fora de lib/blog/ importa de @/.velite
+  ✗ domain/ não importa nada externo
+  ✗ Route Handlers não importam lib/blog/ diretamente — usam funções de lib/blog/db.ts
+  ✓ lib/blog/sanitize.ts é importado por lib/blog/db.ts e pelos Route Handlers
 
 TYPESCRIPT:
-  ✗ Nenhum `any` explícito ou implícito
-  ✗ Nenhuma interface sem `readonly` em todos os campos
-  ✓ Reusar tipos de @/types/blog.ts quando existirem
+  ✗ Zero any
+  ✓ await params em todas as rotas dinâmicas (ADR-012)
+  ✓ generateStaticParams retorna T[] mutável (ADR-012)
 
-STYLING:
-  ✗ Nenhum inline style
-  ✗ Nenhuma classe CSS global nos componentes do blog
-  ✗ Nenhum Tailwind, styled-components ou CSS-in-JS
-  ✓ CSS Module por componente
+ROUTE HANDLERS:
+  ✗ Zero operação de banco sem validação de input antes
+  ✗ Zero log de PII (email, IP, nome)
+  ✓ Status codes consistentes: 200/400/422/429/500
+  ✓ SECURITY_HEADERS em toda resposta
 
-RENDERING:
-  ✗ Nenhuma página de blog usa SSR
-  ✓ Toda página de blog: export const dynamic = 'force-static'
-  ✓ Server Component por padrão
-  ✓ 'use client' apenas com comentário explicando a razão
-
-ARQUIVOS EXISTENTES — NÃO TOCAR:
-  ✗ components/atoms/
-  ✗ components/organisms/ (existentes da LP)
-  ✗ lib/supabase.ts
-  ✗ types/index.ts
-  ✗ hooks/ existentes
-  ✗ app/ existente (fora de app/blog/ e app/api/blog/)
+SEO:
+  ✗ Zero string de metadata hardcoded em páginas — tudo via lib/blog/seo.ts
+  ✓ canonical em toda página de blog
+  ✓ openGraph em toda página de blog
 ```
 
 ---
 
-## MAPA DE EXECUÇÃO — FASE 1
-
-Tasks organizadas em ondas de paralelismo. Dentro de cada onda, todas rodam simultaneamente. Nenhuma task de uma onda inicia antes de todas as da onda anterior estarem concluídas.
+## MAPA DE EXECUÇÃO — FASE 3
 
 ```
-ONDA 1 ─────────────────────────────────────────────────────────────
-  T01  Criar estrutura de pastas                    [sem dependências]
+ONDA 1 ─────────────────────────────────────── (paralelo total)
+  SRE-01  Refatorar PostContent            [sem dependências]
+  SRE-03  MDXErrorBoundary reutilizável    [sem dependências]
+  SRE-04  Centralizar toSummary()          [sem dependências]
+  SRE-05  Auditoria zero <a href>          [sem dependências]
+  T44     lib/blog/sanitize.ts             [sem dependências]
 
-ONDA 2 ─────────────────────────────────────────────────────────────
-  T02  Instalar dependências npm                    [depende: T01]
-  T03  Domain: entities.ts                          [depende: T01]
-  T12* Segurança: remover NEXT_PUBLIC_ADMIN_PASSWORD [depende: T01]
-       * Claude Code — não Codex
+ONDA 2 ─────────────────────────────────────── (paralelo)
+  SRE-02  Refatorar PostSidebar            [depende: SRE-01 ← velite.config headings]
+  T32     lib/blog/seo.ts                  [depende: T10 ✅]
+  T37     app/sitemap.ts                   [depende: T10 ✅]
 
-ONDA 3 ─────────────────────────────────────────────────────────────
-  T04  Domain: value-objects.ts                     [depende: T03]
+ONDA 3 ─────────────────────────────────────── (paralelo)
+  T34     api/blog/og/route.tsx            [depende: T32]
+  T36     lib/blog/feed.ts + rss/route     [depende: T32]
+  T38     public/robots.txt                [depende: T37]
+  T39*    Migration Supabase               [depende: — | CLAUDE CODE]
 
-ONDA 4 ─────────────────────────────────────────────────────────────
-  T05  Domain: repository.ts (IBlogRepository)      [depende: T04]
-  T06  types/blog.ts                                [depende: T04]
-  T09  lib/blog/reading-time.ts                     [depende: T04]
+ONDA 4 ─────────────────────────────────────── (paralelo)
+  T33     generateMetadata centralizado    [depende: T32, T15 ✅]
+  T40     lib/blog/db.ts                   [depende: T44, T39]
 
-ONDA 5 ─────────────────────────────────────────────────────────────
- T07 · Criar velite.config.ts
-Depende: T02, T03 | Bloqueia: T08, T10, T11                     [depende: T02, T03]
+ONDA 5 ─────────────────────────────────────── (paralelo)
+  T35     JSON-LD em [slug]/page           [depende: T33]
+  T41     newsletter/route.ts              [depende: T40]
 
-ONDA 6 ─────────────────────────────────────────────────────────────
-  T08 · Atualizar next.config.ts — VeliteWebpackPlugin Depende: T07 | Bloqueia: T14
-  T11  Posts MDX seed (3 arquivos)                  [depende: T07]
+ONDA 6 ─────────────────────────────────────── (paralelo)
+  T42     BlogNewsletter organism          [depende: T41]
 
-ONDA 7 ─────────────────────────────────────────────────────────────
-  T10  lib/blog/contentlayer.ts (IBlogRepository)   [depende: T05, T07, T09]
+ONDA 7 ─────────────────────────────────────── (sequencial)
+  T43     Integrar trackEvent()            [depende: T42]
 
-ONDA 8 ─────────────────────────────────────────────────────────────
-  T13  app/blog/layout.tsx                          [depende: T10]
-
-ONDA 9 ─────────────────────────────────────────────────────────────
-  T14  app/blog/page.tsx  ← GATE DA FASE 1          [depende: T10, T13]
+GATE FASE 3: build limpo. Sitemap e RSS acessíveis. Newsletter persiste.
+             OG gerada. JSON-LD válido. Zero violações SRE.
 ```
 
 ---
 
-## TASKS — FASE 1
+## TASKS SRE — ONDA 1
 
 ---
 
-### T01 · Criar estrutura de pastas do blog
-**Onda:** 1 | **Node:** N01 | **Agente:** Codex | **Prioridade:** BLOCKER
+### SRE-01 · Refatorar PostContent — Error Boundary + Trust Boundary
+**Onda:** 1 | **Agente:** Codex | **Prioridade:** CRÍTICO (SRE-P3, SRE-P4)
 
-**Objetivo:** Criar todas as pastas e arquivos de entrada necessários. Não cria implementação — apenas a estrutura que as tasks seguintes preenchem.
+**Objetivo:** Adicionar error boundary em volta do render MDX e documentar trust boundary explicitamente. Não alterar a lógica de renderização `Function(code)` — apenas torná-la segura e auditável.
 
-**Arquivos a criar:**
+**Arquivo a modificar:** `components/organisms/PostContent/PostContent.tsx`
 
-```
-domain/blog/.gitkeep
-lib/blog/.gitkeep
-content/blog/.gitkeep
-tests/blog/unit/.gitkeep
-tests/blog/components/.gitkeep
-tests/blog/e2e/.gitkeep
-```
-
-**Barrels vazios (TypeScript exige que os módulos existam):**
+**Mudanças obrigatórias:**
 
 ```typescript
-// domain/blog/index.ts
-export {};
-
-// lib/blog/index.ts
-export {};
-```
-
-**Placeholder de tipos:**
-
-```typescript
-// types/blog.ts
-// Tipos de apresentação do módulo de blog.
-// Entidades de domínio ficam em domain/blog/entities.ts
-// Este arquivo é preenchido pela task T06.
-export {};
-```
-
-**Acceptance criteria:**
-- [ ] Todas as pastas existem
-- [ ] Nenhum arquivo existente foi modificado
-- [ ] `tsc --noEmit` continua passando
-
-**Depends on:** nenhuma | **Bloqueia:** T02, T03, T12
-
----
-
-### T02 · Instalar dependências npm
-**Onda:** 2 | **Node:** N03.1 | **Agente:** Codex | **Prioridade:** BLOCKER
-
-**Comandos exatos:**
-
-```bash
-npm install contentlayer next-contentlayer @next/mdx \
-  rehype-pretty-code shiki rehype-slug rehype-autolink-headings \
-  remark-gfm
-
-npm install -D @types/mdx remark-lint
-```
-
-**Versões alvo:**
-
-| Pacote | Versão |
-|--------|--------|
-| contentlayer | ^0.3.4 |
-| next-contentlayer | ^0.3.4 |
-| @next/mdx | ^15.0.0 |
-| rehype-pretty-code | ^0.14.0 |
-| shiki | ^1.0.0 |
-| rehype-slug | ^6.0.0 |
-| rehype-autolink-headings | ^7.0.0 |
-| remark-gfm | ^4.0.0 |
-| @types/mdx | ^2.0.0 (dev) |
-
-**Acceptance criteria:**
-- [ ] `npm install` conclui sem erros
-- [ ] Todos os pacotes em `package.json`
-- [ ] `tsc --noEmit` continua passando
-
-**Depends on:** T01 | **Bloqueia:** T07
-
----
-
-### T03 · Domain Layer — entities.ts
-**Onda:** 2 | **Node:** N02.1 | **Agente:** Codex | **Prioridade:** BLOCKER
-
-**Objetivo:** Núcleo da Clean Architecture. Não importa nada do projeto — nem Next.js, nem Supabase, nem qualquer lib.
-
-**Arquivo a criar:** `domain/blog/entities.ts`
-
-```typescript
-// domain/blog/entities.ts
-// Camada de Domínio — zero dependências externas.
-// Representa O QUE são as entidades, não como são persistidas ou renderizadas.
-
-import type { ReadingTime, Slug, SocialLink, Tag } from './value-objects';
-
-export interface BlogPost {
-  readonly slug:        Slug;
-  readonly title:       string;
-  readonly description: string;
-  readonly body:        string;         // MDX compilado — string de código JSX
-  readonly author:      BlogAuthor;
-  readonly category:    BlogCategory;
-  readonly tags:        ReadonlyArray<Tag>;
-  readonly publishedAt: Date;
-  readonly updatedAt:   Date;
-  readonly readingTime: ReadingTime;
-  readonly featured:    boolean;
-  readonly draft:       boolean;
-  readonly ogImage:     string | null;
-  readonly series:      BlogSeries | null;
-}
-
-export interface BlogAuthor {
-  readonly slug:   string;
-  readonly name:   string;
-  readonly bio:    string;
-  readonly avatar: string;
-  readonly links:  ReadonlyArray<SocialLink>;
-}
-
-export interface BlogCategory {
-  readonly slug:        string;
-  readonly label:       string;
-  readonly description: string;
-}
-
-export interface BlogSeries {
-  readonly slug:  string;
-  readonly title: string;
-  readonly part:  number;
-  readonly total: number;
-}
-```
-
-**Acceptance criteria:**
-- [ ] Arquivo importa apenas de `./value-objects` — nada mais
-- [ ] Todos os campos são `readonly`
-- [ ] `BlogPost.body` é `string` (não `React.ReactNode`)
-- [ ] `BlogPost.series` é `BlogSeries | null`
-- [ ] `BlogPost.ogImage` é `string | null`
-- [ ] `tsc --noEmit` passa
-
-**Depends on:** T01 | **Bloqueia:** T04
-
----
-
-### T04 · Domain Layer — value-objects.ts
-**Onda:** 3 | **Node:** N02.2 | **Agente:** Codex | **Prioridade:** BLOCKER
-
-**Objetivo:** Value objects com branded types. Garante que uma `string` qualquer não pode ser atribuída a `Slug` sem passar pelo smart constructor.
-
-**Arquivo a criar:** `domain/blog/value-objects.ts`
-
-```typescript
-// domain/blog/value-objects.ts
-// Branded types garantem invariantes em compile-time.
-// Smart constructors são as únicas formas de criar Slug e Tag.
-// Nenhuma dependência externa.
-
-// ─── Branded Types ────────────────────────────────────────────────────────────
-export type Slug = string & { readonly __brand: 'Slug' };
-export type Tag  = string & { readonly __brand: 'Tag'  };
-
-// ─── Value Objects Compostos ──────────────────────────────────────────────────
-export interface ReadingTime {
-  readonly minutes: number;
-  readonly words:   number;
-}
-
-export interface SocialLink {
-  readonly platform: 'twitter' | 'github' | 'linkedin' | 'website';
-  readonly url:      string;
-}
-
-// ─── Smart Constructors ───────────────────────────────────────────────────────
-export function createSlug(raw: string): Slug {
-  const slug = raw
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, '-')  // substitui inválidos por hífen
-    .replace(/-+/g, '-')           // colapsa múltiplos hífens
-    .replace(/^-|-$/g, '');        // remove hífens nas bordas
-  return slug as Slug;
-}
-
-export function createTag(raw: string): Tag {
-  return raw.toLowerCase().trim() as Tag;
-}
-```
-
-**Acceptance criteria:**
-- [ ] `Slug` e `Tag` usam branded types com `__brand`
-- [ ] `createSlug('Wide Events: Intro!')` → `'wide-events-intro-'`
-- [ ] `createSlug('a--b---c')` → `'a-b-c'`
-- [ ] `createTag('  OpenTelemetry  ')` → `'opentelemetry'`
-- [ ] Arquivo não importa nada
-- [ ] `tsc --noEmit` passa
-
-**Depends on:** T03 | **Bloqueia:** T05, T06, T09
-
----
-
-### T05 · Domain Layer — repository.ts (IBlogRepository)
-**Onda:** 4 | **Node:** N02.3 | **Agente:** Codex | **Prioridade:** BLOCKER
-
-**Objetivo:** Contrato de acesso ao conteúdo. Ponto de extensão da Clean Architecture. Trocar Contentlayer por CMS headless não toca nenhuma página — apenas a implementação em `lib/blog/contentlayer.ts`.
-
-**Arquivo a criar:** `domain/blog/repository.ts`
-
-```typescript
-// domain/blog/repository.ts
-// IBlogRepository — contrato de acesso ao conteúdo do blog.
-// ISP: define apenas o que os consumidores precisam.
-// Implementação concreta em lib/blog/contentlayer.ts.
-
-import type { BlogPost, BlogAuthor, BlogCategory } from './entities';
-import type { Slug, Tag }                          from './value-objects';
-
-export interface IBlogRepository {
-  // ─── Leitura de posts ────────────────────────────────────────────────────
-  // getAllPosts: todos (incluindo drafts — uso interno/admin)
-  getAllPosts():                                       Promise<ReadonlyArray<BlogPost>>;
-  // getPublishedPosts: draft:false, ordenados por publishedAt desc
-  getPublishedPosts():                                 Promise<ReadonlyArray<BlogPost>>;
-  // getPostBySlug: retorna null se não encontrar — nunca lança exceção
-  getPostBySlug(slug: Slug):                          Promise<BlogPost | null>;
-  // getFeaturedPosts: featured:true e draft:false
-  getFeaturedPosts():                                  Promise<ReadonlyArray<BlogPost>>;
-
-  // ─── Filtragem ───────────────────────────────────────────────────────────
-  getPostsByCategory(categorySlug: string):            Promise<ReadonlyArray<BlogPost>>;
-  getPostsByTag(tag: Tag):                             Promise<ReadonlyArray<BlogPost>>;
-  // getRelatedPosts: exclui o post atual, prioriza mesma categoria + tags
-  getRelatedPosts(post: BlogPost, limit: number):      Promise<ReadonlyArray<BlogPost>>;
-
-  // ─── Metadados para generateStaticParams ─────────────────────────────────
-  getAllSlugs():       Promise<ReadonlyArray<Slug>>;
-  getAllCategories():  Promise<ReadonlyArray<BlogCategory>>;
-  getAllTags():        Promise<ReadonlyArray<Tag>>;
-  getAllAuthors():     Promise<ReadonlyArray<BlogAuthor>>;
-}
-```
-
-**Acceptance criteria:**
-- [ ] Interface exportada exatamente como `IBlogRepository`
-- [ ] `getPostBySlug` retorna `Promise<BlogPost | null>` — não lança
-- [ ] Todos os retornos de lista são `ReadonlyArray`
-- [ ] Zero referências a Contentlayer, Supabase, Next.js ou libs externas
-- [ ] `tsc --noEmit` passa
-
-**Depends on:** T04 | **Bloqueia:** T10
-
----
-
-### T06 · Criar types/blog.ts
-**Onda:** 4 | **Node:** N02 | **Agente:** Codex | **Prioridade:** HIGH
-
-**Objetivo:** Tipos de apresentação — distintos das entidades de domínio. `BlogPostSummary` não tem `body` (evita carregar MDX compilado em listas).
-
-**Arquivo a modificar:** `types/blog.ts` (substituir o placeholder criado em T01)
-
-```typescript
-// types/blog.ts
-// Tipos de apresentação e API do blog.
-// OCP: types/index.ts (existente) não é modificado.
-
-// ─── Frontmatter validado pelo Contentlayer ──────────────────────────────────
-export interface PostFrontmatter {
-  readonly title:       string;
-  readonly description: string;
-  readonly author:      string;
-  readonly category:    string;
-  readonly tags:        string[];
-  readonly publishedAt: string;         // ISO 8601
-  readonly updatedAt?:  string;
-  readonly featured?:   boolean;
-  readonly draft?:      boolean;
-  readonly ogImage?:    string;
-  readonly seriesSlug?: string;
-  readonly seriesPart?: number;
-}
-
-// ─── Versão resumida para listagens (sem body) ───────────────────────────────
-export interface BlogPostSummary {
-  readonly slug:        string;
-  readonly title:       string;
-  readonly description: string;
-  readonly publishedAt: string;
-  readonly readingTime: number;         // minutos
-  readonly category:    string;
-  readonly tags:        string[];
-  readonly author:      string;
-}
-
-// ─── Props de componentes ────────────────────────────────────────────────────
-export interface PostCardProps {
-  readonly post:     BlogPostSummary;
-  readonly variant?: 'default' | 'featured' | 'compact';
-}
-
-// ─── Paginação ───────────────────────────────────────────────────────────────
-export interface PaginationParams {
-  readonly page:     number;
-  readonly pageSize: number;
-}
-
-export interface PaginatedPosts {
-  readonly posts:      ReadonlyArray<BlogPostSummary>;
-  readonly total:      number;
-  readonly page:       number;
-  readonly totalPages: number;
-}
-
-// ─── Parâmetros de rota (generateStaticParams) ───────────────────────────────
-export type BlogSlugParams     = { slug:      string };
-export type BlogCategoryParams = { categoria: string };
-export type BlogTagParams      = { tag:       string };
-```
-
-**Acceptance criteria:**
-- [ ] `BlogPostSummary` não tem campo `body`
-- [ ] `PostCardProps.variant` tem exatamente: `'default' | 'featured' | 'compact'`
-- [ ] Todos os campos obrigatórios têm `readonly`
-- [ ] `types/index.ts` existente não foi modificado
-- [ ] `tsc --noEmit` passa
-
-**Depends on:** T04 | **Bloqueia:** T23 (Fase 2), T25, T26
-
----
-
-### T07 · Criar contentlayer.config.ts
-**Onda:** 5 | **Node:** N03.2 | **Agente:** Codex | **Prioridade:** BLOCKER
-
-**Objetivo:** Pipeline de conteúdo MDX. Frontmatter inválido (campo obrigatório ausente) deve quebrar o build com mensagem clara. Slug derivado do caminho do arquivo — não do frontmatter.
-
-**Arquivo a criar:**  velite.config.ts (raiz do projeto)
-
-import { defineConfig, defineCollection, s } from 'velite';
-import rehypePrettyCode                       from 'rehype-pretty-code';
-import remarkGfm                              from 'remark-gfm';
-import rehypeSlug                             from 'rehype-slug';
-import rehypeAutolinkHeadings                from 'rehype-autolink-headings';
-
-const posts = defineCollection({
-  name:    'Post',
-  pattern: 'blog/**/*.mdx',
-  schema:  s.object({
-    title:       s.string(),
-    description: s.string(),
-    author:      s.string(),
-    category:    s.string(),
-    tags:        s.array(s.string()),
-    publishedAt: s.isodate(),
-    updatedAt:   s.isodate().optional(),
-    featured:    s.boolean().default(false),
-    draft:       s.boolean().default(false),
-    ogImage:     s.string().optional(),
-    seriesSlug:  s.string().optional(),
-    seriesPart:  s.number().optional(),
-  }).transform((data, { meta }) => ({
-    ...data,
-    slug: meta.path.replace(/^blog\//, '').replace(/\.mdx$/, ''),
-    url:  `/blog/${meta.path.replace(/^blog\//, '').replace(/\.mdx$/, '')}`,
-  })),
-});
-
-export default defineConfig({
-  root:        'content',
-  output:      { data: '.velite', clean: true },
-  collections: { posts },
-  mdx: {
-    remarkPlugins: [remarkGfm],
-    rehypePlugins: [
-      rehypeSlug,
-      [rehypeAutolinkHeadings, { behavior: 'wrap' }],
-      [rehypePrettyCode, {
-        theme:          'one-dark-pro',
-        keepBackground: false,
-        onVisitLine(node: { children: unknown[] }) {
-          if (node.children.length === 0) {
-            node.children = [{ type: 'text', value: ' ' }];
-          }
-        },
-      }],
-    ],
-  },
-});
-
-Adicionar ao .gitignore:
-.velite
-Acceptance criteria:
-
- Arquivo na raiz (não em lib/ nem src/)
- slug derivado de meta.path — não do frontmatter
- Campos title, description, author, category, tags, publishedAt sem .optional() — build falha se ausentes
- .velite no .gitignore
- tsc --noEmit passa
-
-### T08 · Atualizar next.config.ts — diff withContentlayer
-**Onda:** 6 | **Node:** N03 | **Agente:** Codex | **Prioridade:** BLOCKER
-
-Diff exato:
-diff+class VeliteWebpackPlugin {
-+  static defaultOptions = { turbopack: false };
-+  constructor(options = {}) {
-+    Object.assign(this, { ...VeliteWebpackPlugin.defaultOptions, ...options });
-+  }
-+  apply(compiler: import('webpack').Compiler) {
-+    const { build } = require('velite');
-+    compiler.hooks.beforeCompile.tapPromise('VeliteWebpackPlugin', async () => {
-+      await build({ watch: compiler.options.mode === 'development' });
-+    });
-+  }
-+}
-
- const nextConfig: NextConfig = {
-   // configs existentes intactas
-+  pageExtensions: ['ts', 'tsx', 'mdx'],
-+  webpack(config) {
-+    config.plugins.push(new VeliteWebpackPlugin());
-+    return config;
-+  },
- };
-
--export default nextConfig;
-+export default nextConfig;  // SEM withContentlayer — Velite usa webpack hook direto
-Acceptance criteria:
-
- Zero imports de next-contentlayer
- VeliteWebpackPlugin declarada antes do nextConfig
- pageExtensions adicionado
- Nenhuma config existente removida
- tsc --noEmit passa
-
-
-
----
-
-### T09 · Criar lib/blog/reading-time.ts
-**Onda:** 4 | **Node:** N04.1 | **Agente:** Codex | **Prioridade:** HIGH
-
-**Objetivo:** Função pura de estimativa de tempo de leitura. Sem dependências, sem efeitos colaterais, testável sem mocks.
-
-**Arquivo a criar:** `lib/blog/reading-time.ts`
-
-```typescript
-// lib/blog/reading-time.ts
-// Função pura — entrada determinística, saída determinística.
-// Testável sem mocks. Sem dependências externas.
-
-import type { ReadingTime } from '@/domain/blog/value-objects';
-
-// Média de leitura para conteúdo técnico (Nielsen Norman Group)
-const WORDS_PER_MINUTE = 200;
-
-export function computeReadingTime(rawContent: string): ReadingTime {
-  const words   = rawContent.trim().split(/\s+/).filter(Boolean).length;
-  const minutes = Math.max(1, Math.ceil(words / WORDS_PER_MINUTE));
-  return { minutes, words };
-}
-```
-
-**Acceptance criteria:**
-- [ ] `computeReadingTime('')` → `{ minutes: 1, words: 0 }` (sem lançar erro)
-- [ ] 200 palavras → `{ minutes: 1, words: 200 }`
-- [ ] 201 palavras → `{ minutes: 2, words: 201 }` (ceil)
-- [ ] `WORDS_PER_MINUTE = 200` como constante nomeada (não magic number)
-- [ ] `tsc --noEmit` passa
-
-**Depends on:** T04 | **Bloqueia:** T10
-
----
-
-### T10 · Criar lib/blog/contentlayer.ts (implementação IBlogRepository)
-**Onda:** 7 | **Node:** N04.2 | **Agente:** Codex | **Prioridade:** BLOCKER
-
-**Objetivo:** Única camada que sabe que posts vêm de MDX. Implementa `IBlogRepository`. Páginas dependem da interface — não desta classe.
-
-**Arquivo a criar:** `lib/blog/contentlayer.ts`
-
-```typescript
-// lib/blog/contentlayer.ts
-// Implementação de IBlogRepository usando Contentlayer como fonte de dados.
-// DIP: páginas importam IBlogRepository (domínio), não esta classe (infra).
-// Se o Contentlayer mudar, apenas este arquivo muda.
-
-import { allPosts }                    from 'contentlayer/generated';
-import type { IBlogRepository }        from '@/domain/blog/repository';
-import type { BlogAuthor, BlogCategory, BlogPost } from '@/domain/blog/entities';
-import { createSlug, createTag }       from '@/domain/blog/value-objects';
-import { computeReadingTime }          from './reading-time';
-
-// ─── Fontes de verdade de autores e categorias ────────────────────────────────
-// Posts referenciam pelo slug — resolvido aqui no mapeamento.
-export const AUTHORS: Record<string, BlogAuthor> = {
-  'pantor-team': {
-    slug:   'pantor-team',
-    name:   'Time Pantor',
-    bio:    'Engenharia e produto da Pantor — plataforma de observabilidade baseada em wide events.',
-    avatar: '/authors/pantor-team.png',
-    links:  [
-      { platform: 'github',   url: 'https://github.com/pantor-dev'       },
-      { platform: 'linkedin', url: 'https://linkedin.com/company/pantor' },
-    ],
-  },
+// 1. Adicionar comentário de trust boundary logo antes de Function(code):
+// ⚠️ TRUST BOUNDARY (ADR-011): post.body é EXCLUSIVAMENTE build artifact do Velite.
+// Gerado em build time por velite.config.ts — nunca input de usuário ou conteúdo remoto.
+// Não alterar este bloco para aceitar qualquer outra fonte sem revisão de segurança.
+
+// 2. Adicionar guard para módulos não permitidos:
+const runtimeRequire = (mod: string) => {
+  if (mod === 'react/jsx-runtime') return runtime;
+  // Guard explícito: bloquear qualquer tentativa de require inesperado
+  throw new Error(`[PostContent] módulo não autorizado: ${mod}`);
 };
 
-export const CATEGORIES: ReadonlyArray<BlogCategory> = [
-  { slug: 'wide-events',     label: 'Wide Events',     description: 'Eventos contextuais e observabilidade moderna'      },
-  { slug: 'observabilidade', label: 'Observabilidade', description: 'Monitoring, tracing e logging na prática'          },
-  { slug: 'opentelemetry',   label: 'OpenTelemetry',   description: 'Instrumentação e coleta de telemetria'             },
-  { slug: 'engenharia',      label: 'Engenharia',      description: 'Boas práticas de desenvolvimento de software'      },
-];
+// 3. Envolver o render com try/catch + fallback:
+function MDXRenderer({ code, components }: { code: string; components: Record<string, unknown> }) {
+  try {
+    const { default: MDXContent } = new Function('require', code)(runtimeRequire);
+    return <MDXContent components={components} />;
+  } catch (error) {
+    console.error('[PostContent] MDX render error', (error as Error).message);
+    return (
+      <p role='alert' aria-live='polite'>
+        Erro ao renderizar o conteúdo. Tente recarregar a página.
+      </p>
+    );
+  }
+}
+```
 
-// ─── Função de mapeamento ─────────────────────────────────────────────────────
-// Isolamento: se o schema do Contentlayer mudar, apenas esta função muda.
-function toDomainPost(raw: typeof allPosts[number]): BlogPost {
-  const author   = AUTHORS[raw.author] ?? AUTHORS['pantor-team'];
-  const category = CATEGORIES.find(c => c.slug === raw.category) ?? CATEGORIES[0];
+**Não alterar:**
+- A API pública do componente `PostContent({ post })` permanece idêntica
+- O mapa de componentes MDX (pre: CodeBlock etc.)
+- CSS Module
 
+**Acceptance criteria:**
+- [ ] Comentário de trust boundary presente, palavra "TRUST BOUNDARY" no texto
+- [ ] `runtimeRequire` com guard que lança erro para módulos não-runtime
+- [ ] try/catch em volta de `new Function(...)` com fallback de UI acessível (`role='alert'`)
+- [ ] `console.error` com mensagem estruturada sem dados do post
+- [ ] Nenhuma alteração na API pública ou no CSS
+- [ ] `tsc --noEmit` passa
+
+**Depends on:** nenhuma
+
+---
+
+### SRE-03 · Criar MDXErrorBoundary reutilizável
+**Onda:** 1 | **Agente:** Codex | **Prioridade:** HIGH (SRE-P3)
+
+**Arquivo a criar:** `components/atoms/MDXErrorBoundary/MDXErrorBoundary.tsx`
+
+```typescript
+// components/atoms/MDXErrorBoundary/MDXErrorBoundary.tsx
+// Error Boundary para componentes que renderizam MDX ou conteúdo dinâmico.
+// Class component obrigatório: hooks não podem capturar erros de render.
+'use client';
+import { Component, type ReactNode, type ErrorInfo } from 'react';
+import styles from './MDXErrorBoundary.module.css';
+
+interface Props {
+  readonly children:  ReactNode;
+  readonly fallback?: ReactNode;
+}
+
+interface State {
+  readonly hasError: boolean;
+}
+
+export class MDXErrorBoundary extends Component<Props, State> {
+  state: State = { hasError: false };
+
+  static getDerivedStateFromError(): State {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    // Logging estruturado — sem dados do conteúdo (PII/segurança)
+    console.error('[MDXErrorBoundary] render error', {
+      message: error.message,
+      componentStack: info.componentStack?.split('\n')[1]?.trim(),
+    });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback ?? (
+        <div className={styles.fallback} role='alert'>
+          <p>Erro ao renderizar o conteúdo.</p>
+          <button
+            onClick={() => this.setState({ hasError: false })}
+            className={styles.retry}
+          >
+            Tentar novamente
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+```
+
+**Arquivo a criar:** `components/atoms/MDXErrorBoundary/MDXErrorBoundary.module.css`
+
+```css
+.fallback {
+  padding: 1.5rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.5rem;
+  text-align: center;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.retry {
+  margin-top: 0.75rem;
+  padding: 0.375rem 1rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.375rem;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+```
+
+**Acceptance criteria:**
+- [ ] Class component com `getDerivedStateFromError` e `componentDidCatch`
+- [ ] `componentDidCatch` loga apenas `error.message` e primeira linha de `componentStack`
+- [ ] Fallback customizável via prop `fallback`
+- [ ] Botão "Tentar novamente" reseta o estado
+- [ ] `role='alert'` no fallback padrão
+- [ ] CSS Module criado
+- [ ] `tsc --noEmit` passa
+
+**Depends on:** SRE-01
+
+---
+
+### SRE-04 · Centralizar toSummary() em lib/blog/contentlayer.ts
+**Onda:** 1 | **Agente:** Codex | **Prioridade:** MEDIUM (DT-15)
+
+**Objetivo:** `toSummary(post: BlogPost): BlogPostSummary` está duplicado em `app/blog/page.tsx`, `components/organisms/RelatedPosts/RelatedPosts.tsx` e possivelmente outros. Centralizar em `lib/blog/contentlayer.ts` e exportar.
+
+**Arquivo a modificar:** `lib/blog/contentlayer.ts`
+
+```typescript
+// Adicionar e exportar — não duplicar nos consumidores:
+export function toSummary(post: BlogPost): BlogPostSummary {
   return {
-    slug:        createSlug(raw.slug),
-    title:       raw.title,
-    description: raw.description,
-    body:        raw.body.code,
-    author,
-    category,
-    tags:        raw.tags.map(createTag),
-    publishedAt: new Date(raw.publishedAt),
-    updatedAt:   new Date(raw.updatedAt ?? raw.publishedAt),
-    readingTime: computeReadingTime(raw.body.raw),
-    featured:    raw.featured ?? false,
-    draft:       raw.draft    ?? false,
-    ogImage:     raw.ogImage  ?? null,
-    // DT-06: series.total hardcoded como 1 — corrigir na v2
-    series: raw.seriesSlug
-      ? { slug: raw.seriesSlug, title: raw.seriesSlug, part: raw.seriesPart ?? 1, total: 1 }
-      : null,
+    slug:        post.slug as string,
+    title:       post.title,
+    description: post.description,
+    publishedAt: post.publishedAt.toISOString(),
+    readingTime: post.readingTime.minutes,
+    category:    (post.category as BlogCategory).slug,
+    tags:        post.tags as string[],
+    author:      post.author.slug,
+  };
+}
+```
+
+**Arquivos a modificar (remover implementações duplicadas e importar de lib/blog/contentlayer):**
+- `app/blog/page.tsx` — substituir mapeamento inline por `import { toSummary } from '@/lib/blog/contentlayer'`
+- `components/organisms/RelatedPosts/RelatedPosts.tsx` — idem
+- Qualquer outro arquivo que contenha a mesma lógica de mapeamento
+
+**Acceptance criteria:**
+- [ ] `toSummary` exportado de `lib/blog/contentlayer.ts`
+- [ ] Zero implementações duplicadas do mapeamento `BlogPost → BlogPostSummary`
+- [ ] Todos os consumidores importam de `@/lib/blog/contentlayer`
+- [ ] `tsc --noEmit` passa
+- [ ] `next build` passa
+
+**Depends on:** nenhuma
+
+---
+
+### SRE-05 · Auditoria — zero `<a href>` e zero import `@/.velite` fora de lib/blog/
+**Onda:** 1 | **Agente:** Codex | **Prioridade:** HIGH
+
+**Objetivo:** Verificar e corrigir duas constraints críticas que podem ter escorregado na implementação.
+
+**Comandos de auditoria (executar primeiro, corrigir o que encontrar):**
+
+```bash
+# Auditoria 1: <a href> para rotas internas /blog (deve retornar zero)
+grep -rn '<a href="/blog\|<a href={`/blog' \
+  components/ app/blog/ \
+  --include="*.tsx" --include="*.ts"
+
+# Auditoria 2: import de @/.velite fora de lib/blog/ (deve retornar zero)
+grep -rn '@/.velite' \
+  app/ components/ hooks/ domain/ \
+  --include="*.tsx" --include="*.ts"
+
+# Auditoria 3: any explícito (deve retornar zero em arquivos do blog)
+grep -rn ': any\b\|as any\b' \
+  domain/blog/ lib/blog/ components/molecules/ components/organisms/Blog* \
+  hooks/useTable* hooks/useReading* \
+  --include="*.tsx" --include="*.ts"
+```
+
+**Para cada ocorrência encontrada:**
+- `<a href>` para rota interna → substituir por `<Link href>` do next/link
+- `import @/.velite` fora de lib/blog/ → mover lógica para lib/blog/contentlayer.ts e importar via repositório
+- `: any` → tipar corretamente
+
+**Acceptance criteria:**
+- [ ] `grep <a href="/blog` em components/ e app/blog/ retorna zero resultados
+- [ ] `grep @/.velite` fora de lib/blog/ retorna zero resultados
+- [ ] `grep ': any'` nos arquivos do blog retorna zero resultados
+- [ ] `tsc --noEmit` passa após correções
+
+**Depends on:** nenhuma
+
+---
+
+### SRE-02 · Refatorar PostSidebar — Headings via campo Velite (não regex)
+**Onda:** 2 | **Agente:** Codex | **Prioridade:** HIGH (DT-13)
+
+**Objetivo:** Substituir a extração de headings via regex de `body.code` por um campo computado no Velite. A regex está acoplada ao formato de output do Velite 0.3.1 e quebra em qualquer upgrade.
+
+**Passo 1 — Adicionar campo `headings` ao velite.config.ts:**
+
+```typescript
+// velite.config.ts — adicionar ao schema do Post:
+import { unified }      from 'unified';
+import remarkParse      from 'remark-parse';
+import { visit }        from 'unist-util-visit';
+import type { Heading, Text } from 'mdast';
+
+// Adicionar ao schema:
+headings: s.custom<ReadonlyArray<{ id: string; text: string; level: 2 | 3 }>>()
+  .transform(async (_val, { meta }) => {
+    const content = await fs.promises.readFile(meta.filePath, 'utf-8');
+    const tree    = unified().use(remarkParse).parse(content);
+    const result: Array<{ id: string; text: string; level: 2 | 3 }> = [];
+
+    visit(tree, 'heading', (node: Heading) => {
+      if (node.depth !== 2 && node.depth !== 3) return;
+      const text = node.children
+        .filter((c): c is Text => c.type === 'text')
+        .map(c => c.value)
+        .join('');
+      const id   = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      result.push({ id, text, level: node.depth as 2 | 3 });
+    });
+
+    return result;
+  }),
+```
+
+**Passo 2 — Adicionar `headings` à interface `BlogPost` em `domain/blog/entities.ts`:**
+
+```typescript
+readonly headings: ReadonlyArray<{
+  readonly id:    string;
+  readonly text:  string;
+  readonly level: 2 | 3;
+}>;
+```
+
+**Passo 3 — Atualizar `toDomainPost` em `lib/blog/contentlayer.ts`:**
+
+```typescript
+headings: raw.headings ?? [],
+```
+
+**Passo 4 — Refatorar `PostSidebar.tsx`:**
+- Remover função `extractHeadings` e qualquer regex
+- Usar `post.headings` diretamente: `const headings = post.headings`
+- Passar para `useTableOfContents(post.headings)`
+
+**Packages necessários (instalar se não existirem):**
+
+```bash
+npm install unified remark-parse unist-util-visit
+npm install -D @types/unist
+```
+
+**Acceptance criteria:**
+- [ ] `velite.config.ts` tem campo `headings` como computed field
+- [ ] `domain/blog/entities.ts` tem `headings` na interface `BlogPost`
+- [ ] `toDomainPost` mapeia `headings`
+- [ ] `PostSidebar.tsx` sem regex — usa `post.headings`
+- [ ] `<progress>` element preservado para barra de progresso (não regredir)
+- [ ] `next build` passa e headings aparecem no TOC dos 3 posts seed
+- [ ] `tsc --noEmit` passa
+
+**ADR Draft obrigatório se `unified`/`remark-parse` causarem conflito de build:**
+Retornar draft antes de improvisar solução alternativa.
+
+**Depends on:** SRE-01 (entities.ts atualizado em paralelo)
+
+---
+
+## TASKS FUNCIONAIS
+
+---
+
+### T44 · Criar lib/blog/sanitize.ts
+**Onda:** 1 | **Node:** N11.4 | **Agente:** Codex | **Prioridade:** BLOCKER (SRE-P2)
+
+**Arquivo a criar:** `lib/blog/sanitize.ts`
+
+```typescript
+// lib/blog/sanitize.ts
+// Funções puras de sanitização. Sem dependências externas.
+// SRE-P2: usadas por lib/blog/db.ts e Route Handlers antes de qualquer persistência.
+
+// EMAIL
+// RFC 5321: máximo 254 chars. Normalizar lowercase + trim antes de validar.
+const EMAIL_MAX_LENGTH = 254;
+const EMAIL_REGEX      = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+export function sanitizeEmail(raw: string): string {
+  return raw.toLowerCase().trim().slice(0, EMAIL_MAX_LENGTH);
+}
+
+export function isValidEmail(email: string): boolean {
+  const sanitized = sanitizeEmail(email);
+  return EMAIL_REGEX.test(sanitized) && sanitized.length <= EMAIL_MAX_LENGTH;
+}
+
+// SLUG
+// Apenas [a-z0-9-], máximo 200 chars. Usado em sourceSlug de newsletter.
+const SLUG_MAX_LENGTH = 200;
+
+export function sanitizeSlug(raw: string): string {
+  return raw
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '')
+    .slice(0, SLUG_MAX_LENGTH);
+}
+
+export function isValidSlug(slug: string): boolean {
+  return /^[a-z0-9-]+$/.test(slug) && slug.length > 0 && slug.length <= SLUG_MAX_LENGTH;
+}
+
+// TYPE GUARDS
+// Usados em Route Handlers para validação de input antes de cast.
+export function isString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+```
+
+**Acceptance criteria:**
+- [ ] Funções puras — zero dependências externas, zero efeitos colaterais
+- [ ] `sanitizeEmail` aplica lowercase + trim + slice
+- [ ] `isValidEmail` valida após sanitização
+- [ ] `sanitizeSlug` remove tudo fora de `[a-z0-9-]`
+- [ ] `isRecord` e `isString` exportados para type guards em Route Handlers
+- [ ] `tsc --noEmit` passa
+
+**Depends on:** nenhuma | **Bloqueia:** T40, T41
+
+---
+
+### T32 · Criar lib/blog/seo.ts
+**Onda:** 2 | **Node:** N04.3 | **Agente:** Codex | **Prioridade:** HIGH
+
+**Arquivo a criar:** `lib/blog/seo.ts`
+
+```typescript
+// lib/blog/seo.ts
+// Centraliza toda a geração de metadata para as rotas do blog.
+// Nenhuma página define título, descrição ou OG inline — tudo passa aqui.
+// Acoplamento zero com Next.js além do tipo Metadata.
+
+import type { Metadata }      from 'next';
+import type { BlogPost }      from '@/domain/blog/entities';
+import type { BlogCategory }  from '@/domain/blog/entities';
+
+const SITE_NAME = 'Pantor';
+const SITE_URL  = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pantor.dev';
+
+// ─── Blog Index ───────────────────────────────────────────────────────────────
+export function generateBlogListMetadata(postCount: number): Metadata {
+  const title       = `Blog — Observabilidade e Wide Events | ${SITE_NAME}`;
+  const description = `${postCount} artigos técnicos sobre observabilidade, wide events, OpenTelemetry e engenharia de produção.`;
+  return {
+    title,
+    description,
+    alternates: { canonical: `${SITE_URL}/blog` },
+    openGraph: {
+      type:        'website',
+      title,
+      description,
+      url:         `${SITE_URL}/blog`,
+      siteName:    SITE_NAME,
+      images:      [{ url: `${SITE_URL}/og-default.png`, width: 1200, height: 630 }],
+    },
   };
 }
 
-// ─── Implementação ────────────────────────────────────────────────────────────
-class ContentlayerBlogRepository implements IBlogRepository {
-  async getAllPosts() {
-    return allPosts.map(toDomainPost);
-  }
-
-  async getPublishedPosts() {
-    return allPosts
-      .filter(post => !post.draft)
-      .sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt))
-      .map(toDomainPost);
-  }
-
-  async getPostBySlug(slug) {
-    const raw = allPosts.find(post => post.slug === slug);
-    return raw ? toDomainPost(raw) : null;
-  }
-
-  async getFeaturedPosts() {
-    return allPosts
-      .filter(post => post.featured && !post.draft)
-      .map(toDomainPost);
-  }
-
-  async getPostsByCategory(categorySlug) {
-    return allPosts
-      .filter(post => post.category === categorySlug && !post.draft)
-      .sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt))
-      .map(toDomainPost);
-  }
-
-  async getPostsByTag(tag) {
-    return allPosts
-      .filter(post => post.tags.includes(tag) && !post.draft)
-      .sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt))
-      .map(toDomainPost);
-  }
-
-  async getRelatedPosts(post, limit = 3) {
-    const categorySlug = (post.category as BlogCategory).slug;
-    return allPosts
-      .filter(candidate =>
-        candidate.slug !== (post.slug as string) &&
-        !candidate.draft &&
-        (candidate.category === categorySlug ||
-         candidate.tags.some(tag => (post.tags as string[]).includes(tag)))
-      )
-      .sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt))
-      .slice(0, limit)
-      .map(toDomainPost);
-  }
-
-  async getAllSlugs() {
-    return allPosts
-      .filter(post => !post.draft)
-      .map(post => createSlug(post.slug));
-  }
-
-  async getAllCategories() {
-    return CATEGORIES;
-  }
-
-  async getAllTags() {
-    const tagSet = new Set(allPosts.flatMap(post => post.tags));
-    return [...tagSet].map(createTag);
-  }
-
-  async getAllAuthors() {
-    return Object.values(AUTHORS);
-  }
+// ─── Post Individual ─────────────────────────────────────────────────────────
+export function generatePostMetadata(post: BlogPost): Metadata {
+  const slug        = post.slug as string;
+  const ogImageUrl  = post.ogImage ?? `${SITE_URL}/api/blog/og?slug=${slug}`;
+  return {
+    title:       `${post.title} | ${SITE_NAME}`,
+    description: post.description,
+    alternates:  { canonical: `${SITE_URL}/blog/${slug}` },
+    openGraph: {
+      type:             'article',
+      title:             post.title,
+      description:       post.description,
+      url:              `${SITE_URL}/blog/${slug}`,
+      siteName:          SITE_NAME,
+      publishedTime:     post.publishedAt.toISOString(),
+      modifiedTime:      post.updatedAt.toISOString(),
+      authors:          [post.author.name],
+      tags:              post.tags as string[],
+      images:           [{ url: ogImageUrl, width: 1200, height: 630, alt: post.title }],
+    },
+    twitter: {
+      card:        'summary_large_image',
+      title:        post.title,
+      description:  post.description,
+      images:      [ogImageUrl],
+    },
+  };
 }
 
-// Singleton exportado como interface — não como classe concreta
-export const blogRepository: IBlogRepository = new ContentlayerBlogRepository();
+// ─── Categoria ───────────────────────────────────────────────────────────────
+export function generateCategoryMetadata(category: BlogCategory): Metadata {
+  const title = `${category.label} — Blog ${SITE_NAME}`;
+  return {
+    title,
+    description:  category.description,
+    alternates:  { canonical: `${SITE_URL}/blog/categoria/${category.slug}` },
+    openGraph:   { type: 'website', title, description: category.description, siteName: SITE_NAME },
+  };
+}
+
+// ─── Tag ─────────────────────────────────────────────────────────────────────
+export function generateTagMetadata(tag: string): Metadata {
+  const title       = `#${tag} — Blog ${SITE_NAME}`;
+  const description = `Artigos sobre ${tag} no Blog da ${SITE_NAME}.`;
+  return {
+    title,
+    description,
+    alternates: { canonical: `${SITE_URL}/blog/tag/${tag}` },
+    openGraph:  { type: 'website', title, description, siteName: SITE_NAME },
+  };
+}
+
+// ─── JSON-LD Article Schema ───────────────────────────────────────────────────
+export function generatePostJsonLd(post: BlogPost): Record<string, unknown> {
+  const slug = post.slug as string;
+  return {
+    '@context':         'https://schema.org',
+    '@type':            'Article',
+    headline:            post.title,
+    description:         post.description,
+    datePublished:       post.publishedAt.toISOString(),
+    dateModified:        post.updatedAt.toISOString(),
+    author: {
+      '@type': 'Organization',
+      name:     post.author.name,
+      url:     `${SITE_URL}`,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name:     SITE_NAME,
+      url:      SITE_URL,
+    },
+    mainEntityOfPage: `${SITE_URL}/blog/${slug}`,
+    image:             post.ogImage ?? `${SITE_URL}/api/blog/og?slug=${slug}`,
+  };
+}
 ```
 
 **Acceptance criteria:**
-- [ ] Implementa todos os métodos de `IBlogRepository` sem erro de tipo
-- [ ] `getPublishedPosts` filtra `draft: true` e ordena por `publishedAt` desc
-- [ ] `getPostBySlug` retorna `null` para slug inexistente
-- [ ] `getRelatedPosts` exclui o post atual
-- [ ] `blogRepository` exportado tipado como `IBlogRepository`
+- [ ] 5 funções exportadas: `generateBlogListMetadata`, `generatePostMetadata`, `generateCategoryMetadata`, `generateTagMetadata`, `generatePostJsonLd`
+- [ ] `SITE_URL` lido de `NEXT_PUBLIC_SITE_URL` com fallback
+- [ ] `generatePostMetadata` usa OG dinâmica como fallback quando `post.ogImage` é null
+- [ ] `generatePostJsonLd` retorna objeto `Record<string, unknown>` (não string)
+- [ ] Nenhuma referência a componentes React ou Next.js além de `Metadata`
 - [ ] `tsc --noEmit` passa
 
-**Depends on:** T05, T07, T09 | **Bloqueia:** T13, T14
+**Depends on:** T10 ✅
 
 ---
 
-### T11 · Criar posts MDX seed (3 arquivos)
-**Onda:** 6 | **Node:** N03.6 | **Agente:** Codex | **Prioridade:** HIGH
+### T37 · Criar app/sitemap.ts
+**Onda:** 2 | **Node:** N08.5 | **Agente:** Codex | **Prioridade:** HIGH
 
-**Objetivo:** Criar os 3 primeiros posts reais do blog. Validam o pipeline MDX end-to-end e serão o conteúdo inicial em produção.
-
-**Arquivo 1:** `content/blog/wide-events-intro.mdx`
-
-```markdown
----
-title: "O que são Wide Events e por que substituem logs isolados"
-description: "Wide events capturam o contexto completo de uma requisição em um único evento estruturado. Entenda por que isso muda como você observa produção."
-author: "pantor-team"
-category: "wide-events"
-tags:
-  - wide-events
-  - observabilidade
-  - opentelemetry
-publishedAt: "2025-04-01"
-featured: true
-draft: false
----
-
-## O problema com logs isolados
-
-Quando um usuário reporta lentidão, a investigação típica começa assim: abrir o painel de métricas,
-depois os logs de aplicação, depois os traces — cada sistema em uma aba diferente, cada um com
-seu próprio formato, cada um com parte do contexto.
-
-Wide events resolvem isso capturando tudo em um único evento estruturado no momento em que acontece.
-
-## O que é um wide event
-
-Um wide event é um evento estruturado que carrega o contexto completo de uma operação.
-Em vez de emitir `request received`, `db query start`, `db query end` como eventos separados,
-você emite um único evento com todos esses campos:
-
-```json
-{
-  "trace_id": "abc123",
-  "endpoint": "POST /api/checkout",
-  "duration_ms": 342,
-  "db_queries": 3,
-  "db_duration_ms": 180,
-  "cache_hits": 2,
-  "status_code": 200
-}
-```
-
-## Por que isso importa para observabilidade
-
-Com eventos isolados, reconstruir o contexto de um incidente requer correlação manual entre
-sistemas diferentes. Com wide events, a resposta para "o que aconteceu nesta requisição"
-está em um único lugar.
-
-A Pantor foi construída em torno deste princípio.
-```
-
-**Arquivo 2:** `content/blog/observabilidade-vs-monitoramento.mdx`
-
-```markdown
----
-title: "Observabilidade vs Monitoramento: qual a diferença real"
-description: "Monitoramento te diz se algo está errado. Observabilidade te diz por quê. Entenda a distinção e por que ela importa para times de produção modernos."
-author: "pantor-team"
-category: "observabilidade"
-tags:
-  - observabilidade
-  - monitoramento
-  - sre
-publishedAt: "2025-04-08"
-featured: false
-draft: false
----
-
-## A distinção fundamental
-
-Monitoramento responde perguntas que você formulou antes do problema acontecer.
-Você configura alertas para métricas conhecidas — CPU acima de 80%, latência acima de 500ms.
-
-Observabilidade responde perguntas que você ainda não sabia que precisaria fazer.
-Quando um novo tipo de falha ocorre — e sempre ocorre — você consegue investigar sem
-precisar redeploy com mais instrumentação.
-
-## Os três pilares e seu limite
-
-A narrativa popular fala em logs, métricas e traces como os três pilares da observabilidade.
-Mas pilares são estruturas independentes. Observabilidade real precisa de correlação.
-
-Wide events são a resposta: em vez de três fluxos separados para correlacionar depois,
-você captura contexto correlacionado na origem.
-
-## O que isso significa na prática
-
-Um time com boa observabilidade consegue responder:
-
-- Qual percentual de requisições lentas vieram de usuários no plano gratuito?
-- Quais deploys correlacionam com aumento de erros 5xx?
-- Qual feature flag está associada a maior latência de banco?
-
-Essas perguntas requerem contexto — não apenas métricas isoladas.
-```
-
-**Arquivo 3:** `content/blog/opentelemetry-primeiros-passos.mdx`
-
-```markdown
----
-title: "OpenTelemetry em produção: primeiros passos sem dor"
-description: "Guia prático para instrumentar uma aplicação Node.js com OpenTelemetry sem precisar reescrever seu código."
-author: "pantor-team"
-category: "opentelemetry"
-tags:
-  - opentelemetry
-  - nodejs
-  - instrumentacao
-publishedAt: "2025-04-15"
-featured: false
-draft: false
-seriesSlug: "guia-observabilidade"
-seriesPart: 1
----
-
-## Por que OpenTelemetry
-
-OpenTelemetry é o padrão aberto para instrumentação — mantido pela CNCF, com suporte
-de todos os grandes vendors de observabilidade. Instrumentar com OTel significa que
-você pode trocar o backend sem reescrever a instrumentação.
-
-## Instalação mínima para Node.js
-
-```bash
-npm install @opentelemetry/sdk-node \
-  @opentelemetry/auto-instrumentations-node \
-  @opentelemetry/exporter-otlp-http
-```
-
-## Configuração básica
+**Arquivo a criar:** `app/sitemap.ts`
 
 ```typescript
-// instrumentation.ts — carregado antes de qualquer outro módulo
-import { NodeSDK }                     from '@opentelemetry/sdk-node';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { OTLPTraceExporter }           from '@opentelemetry/exporter-otlp-http';
+// app/sitemap.ts — Server Component (Next.js Metadata API)
+// Gerado em build time — SSG automático pelo Next.js.
+import type { MetadataRoute } from 'next';
+import { blogRepository }     from '@/lib/blog/contentlayer';
 
-const sdk = new NodeSDK({
-  traceExporter: new OTLPTraceExporter({
-    url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
-  }),
-  instrumentations: [getNodeAutoInstrumentations()],
-});
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pantor.dev';
 
-sdk.start();
-```
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [slugs, categories, tags] = await Promise.all([
+    blogRepository.getAllSlugs(),
+    blogRepository.getAllCategories(),
+    blogRepository.getAllTags(),
+  ]);
 
-## O que você ganha imediatamente
+  const postEntries = slugs.map(slug => ({
+    url:              `${SITE_URL}/blog/${slug as string}`,
+    lastModified:      new Date(),
+    changeFrequency:  'weekly'  as const,
+    priority:          0.8,
+  }));
 
-Com auto-instrumentação ativada, você passa a ter traces automáticos de:
+  const categoryEntries = categories.map(cat => ({
+    url:             `${SITE_URL}/blog/categoria/${cat.slug}`,
+    lastModified:     new Date(),
+    changeFrequency: 'weekly' as const,
+    priority:         0.6,
+  }));
 
-- HTTP (req/res, headers, status codes)
-- Banco de dados (queries, duration, connection pool)
-- Redis/cache
-- Propagação de contexto entre serviços
+  const tagEntries = tags.map(tag => ({
+    url:             `${SITE_URL}/blog/tag/${tag as string}`,
+    lastModified:     new Date(),
+    changeFrequency: 'monthly' as const,
+    priority:         0.4,
+  }));
 
-Sem escrever uma linha de instrumentação manual.
+  return [
+    { url: `${SITE_URL}/blog`, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
+    ...postEntries,
+    ...categoryEntries,
+    ...tagEntries,
+  ];
+}
 ```
 
 **Acceptance criteria:**
-- [ ] Os 3 arquivos existem em `content/blog/`
-- [ ] Todos têm frontmatter completo com todos os campos obrigatórios
-- [ ] `featured: true` em pelo menos 1 post (`wide-events-intro`)
-- [ ] `draft: false` em todos os posts
-- [ ] Pelo menos 1 post tem bloco de código com syntax highlighting
-- [ ] `next build` processa os 3 posts sem erro de frontmatter
+- [ ] Exporta `default async function sitemap()`
+- [ ] `Promise.all` para queries paralelas (não sequenciais)
+- [ ] Inclui: `/blog`, posts, categorias, tags
+- [ ] `changeFrequency` e `priority` diferenciados por tipo de rota
+- [ ] `tsc --noEmit` passa
 
-**Depends on:** T07 | **Bloqueia:** (nenhuma — finaliza pipeline de conteúdo)
+**Depends on:** T10 ✅
 
 ---
 
-### T13 · Criar app/blog/layout.tsx
-**Onda:** 8 | **Node:** N05.5 | **Agente:** Codex | **Prioridade:** HIGH
+### T38 · Criar public/robots.txt
+**Onda:** 3 | **Node:** N08.7 | **Agente:** Codex | **Prioridade:** MEDIUM
 
-**Objetivo:** Layout raiz do blog. Server Component. Compartilhado por todas as rotas `/blog/*`.
+**Arquivo a criar:** `public/robots.txt`
 
-**Arquivo a criar:** `app/blog/layout.tsx`
+```
+User-agent: *
+Allow: /blog/
+Allow: /blog/categoria/
+Allow: /blog/tag/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /.velite/
+
+Sitemap: https://pantor.dev/sitemap.xml
+```
+
+**Acceptance criteria:**
+- [ ] `Disallow: /admin/` e `Disallow: /api/` presentes
+- [ ] `Sitemap:` aponta para URL de produção (não localhost)
+- [ ] `/blog/` e subcategorias explicitamente permitidos
+
+**Depends on:** T37
+
+---
+
+### T34 · Criar app/api/blog/og/route.tsx
+**Onda:** 3 | **Node:** N08.2 | **Agente:** Codex | **Prioridade:** HIGH
+
+**Arquivo a criar:** `app/api/blog/og/route.tsx`
 
 ```typescript
-// app/blog/layout.tsx — Server Component
-// Layout compartilhado por todas as rotas do blog.
-// Sem 'use client' — não tem interatividade própria.
-import type { Metadata } from 'next';
-import styles            from './blog.module.css';
+// app/api/blog/og/route.tsx
+// Edge Runtime: ImageResponse para OG dinâmica por post.
+// Cache de 1 hora — conteúdo estático por slug.
+// SRE-P2: slug do query param sanitizado antes de qualquer operação.
 
-export const metadata: Metadata = {
-  title: {
-    template: '%s | Pantor Blog',
-    default:  'Blog | Pantor',
-  },
-};
+import { ImageResponse } from 'next/og';
+import { blogRepository }  from '@/lib/blog/contentlayer';
+import { createSlug }      from '@/domain/blog/value-objects';
+import { sanitizeSlug }    from '@/lib/blog/sanitize';
 
-interface BlogLayoutProps {
-  readonly children: React.ReactNode;
+export const runtime = 'edge';
+
+const CACHE_CONTROL = 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400';
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const rawSlug          = searchParams.get('slug') ?? '';
+
+  // SRE-P2: sanitizar antes de usar como chave de busca
+  const slug = sanitizeSlug(rawSlug);
+  if (!slug) {
+    return new Response('slug inválido', { status: 400 });
+  }
+
+  const post = await blogRepository.getPostBySlug(createSlug(slug));
+  if (!post) {
+    return new Response('Post não encontrado', { status: 404 });
+  }
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          display:         'flex',
+          flexDirection:   'column',
+          justifyContent:  'flex-end',
+          width:           '100%',
+          height:          '100%',
+          padding:         '60px',
+          backgroundColor: '#0f172a',
+          color:           '#f1f5f9',
+          fontFamily:      'sans-serif',
+        }}
+      >
+        <div style={{ fontSize: 16, color: '#94a3b8', marginBottom: 16 }}>
+          Pantor Blog · {(post.category as { label: string }).label}
+        </div>
+        <div style={{ fontSize: 52, fontWeight: 700, lineHeight: 1.2, marginBottom: 24 }}>
+          {post.title}
+        </div>
+        <div style={{ fontSize: 22, color: '#94a3b8', lineHeight: 1.5 }}>
+          {post.description.slice(0, 120)}{post.description.length > 120 ? '…' : ''}
+        </div>
+        <div style={{ display: 'flex', marginTop: 40, alignItems: 'center', gap: 16 }}>
+          <div style={{ fontSize: 16, color: '#64748b' }}>
+            {post.readingTime.minutes} min · {new Date(post.publishedAt).toLocaleDateString('pt-BR')}
+          </div>
+        </div>
+      </div>
+    ),
+    {
+      width:   1200,
+      height:  630,
+      headers: { 'Cache-Control': CACHE_CONTROL },
+    }
+  );
+}
+```
+
+**Acceptance criteria:**
+- [ ] `export const runtime = 'edge'`
+- [ ] `sanitizeSlug` aplicado no param `slug` antes de qualquer operação
+- [ ] `400` para slug vazio/inválido, `404` para post não encontrado
+- [ ] `Cache-Control` com `public, max-age=3600`
+- [ ] Dimensões 1200×630
+- [ ] `tsc --noEmit` passa
+
+**Depends on:** T32, T44
+
+---
+
+### T36 · Criar lib/blog/feed.ts + app/api/blog/rss/route.tsx
+**Onda:** 3 | **Node:** N08.6 | **Agente:** Codex | **Prioridade:** MEDIUM
+
+**Arquivo a criar:** `lib/blog/feed.ts`
+
+```typescript
+// lib/blog/feed.ts
+// Geração de XML RSS 2.0. Função pura — recebe posts, retorna string.
+// Zero dependências de terceiros. Encoding manual para controle total.
+
+import type { BlogPost } from '@/domain/blog/entities';
+
+const SITE_URL  = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pantor.dev';
+const SITE_NAME = 'Pantor Blog';
+
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;')
+    .replace(/'/g,  '&apos;');
 }
 
-export default function BlogLayout({ children }: BlogLayoutProps) {
+export function generateRssFeed(posts: ReadonlyArray<BlogPost>): string {
+  const items = posts.map(post => {
+    const slug = post.slug as string;
+    const url  = `${SITE_URL}/blog/${slug}`;
+    return `
+    <item>
+      <title>${escapeXml(post.title)}</title>
+      <link>${url}</link>
+      <guid isPermaLink="true">${url}</guid>
+      <description>${escapeXml(post.description)}</description>
+      <pubDate>${post.publishedAt.toUTCString()}</pubDate>
+      <author>noreply@pantor.dev (${escapeXml(post.author.name)})</author>
+      ${(post.tags as string[]).map(t => `<category>${escapeXml(t)}</category>`).join('\n      ')}
+    </item>`.trim();
+  }).join('\n    ');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>${escapeXml(SITE_NAME)}</title>
+    <link>${SITE_URL}/blog</link>
+    <description>Artigos técnicos sobre observabilidade, wide events e engenharia de produção.</description>
+    <language>pt-BR</language>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <atom:link href="${SITE_URL}/api/blog/rss" rel="self" type="application/rss+xml"/>
+    ${items}
+  </channel>
+</rss>`;
+}
+```
+
+**Arquivo a criar:** `app/api/blog/rss/route.tsx`
+
+```typescript
+// app/api/blog/rss/route.tsx
+import { blogRepository } from '@/lib/blog/contentlayer';
+import { generateRssFeed } from '@/lib/blog/feed';
+
+export const dynamic    = 'force-static';
+export const revalidate = false;
+
+export async function GET() {
+  const posts = await blogRepository.getPublishedPosts();
+  const xml   = generateRssFeed(posts);
+
+  return new Response(xml, {
+    headers: {
+      'Content-Type':  'application/rss+xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+    },
+  });
+}
+```
+
+**Acceptance criteria:**
+- [ ] `escapeXml` escapa `& < > " '`
+- [ ] Feed válido como RSS 2.0 (verificar com W3C RSS Validator)
+- [ ] Route com `force-static` e `Cache-Control: public`
+- [ ] `tsc --noEmit` passa
+
+**Depends on:** T32
+
+---
+
+### T33 · Centralizar generateMetadata via seo.ts em todas as rotas
+**Onda:** 4 | **Node:** N08.1 | **Agente:** Codex | **Prioridade:** HIGH
+
+**Objetivo:** Substituir todas as implementações inline de `generateMetadata` nas rotas de blog por chamadas às funções de `lib/blog/seo.ts`. Nenhuma rota deve definir título, description ou openGraph inline.
+
+**Arquivos a modificar:**
+
+```typescript
+// app/blog/page.tsx
+import { generateBlogListMetadata } from '@/lib/blog/seo';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const posts = await blogRepository.getPublishedPosts();
+  return generateBlogListMetadata(posts.length);
+}
+
+// app/blog/[slug]/page.tsx
+import { generatePostMetadata } from '@/lib/blog/seo';
+
+export async function generateMetadata({ params }: { params: Promise<BlogSlugParams> }): Promise<Metadata> {
+  const { slug } = await params;
+  const post     = await blogRepository.getPostBySlug(createSlug(slug));
+  if (!post) return {};
+  return generatePostMetadata(post);
+}
+
+// app/blog/categoria/[categoria]/page.tsx
+import { generateCategoryMetadata } from '@/lib/blog/seo';
+
+export async function generateMetadata({ params }: { params: Promise<BlogCategoryParams> }): Promise<Metadata> {
+  const { categoria } = await params;
+  const categories    = await blogRepository.getAllCategories();
+  const category      = categories.find(c => c.slug === categoria);
+  if (!category) return {};
+  return generateCategoryMetadata(category);
+}
+
+// app/blog/tag/[tag]/page.tsx
+import { generateTagMetadata } from '@/lib/blog/seo';
+
+export async function generateMetadata({ params }: { params: Promise<BlogTagParams> }): Promise<Metadata> {
+  const { tag } = await params;
+  return generateTagMetadata(tag);
+}
+```
+
+**Acceptance criteria:**
+- [ ] Zero string de título, description ou openGraph hardcoded nas 4 rotas de blog
+- [ ] Todas as rotas importam de `@/lib/blog/seo`
+- [ ] `tsc --noEmit` passa
+- [ ] `next build` passa — metadata gerada corretamente para os 3 posts seed
+
+**Depends on:** T32, T15 ✅
+
+---
+
+### T35 · Adicionar JSON-LD em app/blog/[slug]/page.tsx
+**Onda:** 5 | **Node:** N08.4 | **Agente:** Codex | **Prioridade:** HIGH
+
+**Arquivo a modificar:** `app/blog/[slug]/page.tsx`
+
+```typescript
+// Adicionar import:
+import { generatePostJsonLd } from '@/lib/blog/seo';
+
+// Adicionar no return do Page (dentro do <article> ou antes do <div className={styles.layout}>):
+const jsonLd = generatePostJsonLd(post);
+
+// No JSX:
+<script
+  type='application/ld+json'
+  dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+/>
+```
+
+**Acceptance criteria:**
+- [ ] `<script type='application/ld+json'>` presente no HTML do post
+- [ ] JSON-LD contém `@type: Article`, `headline`, `datePublished`, `author`, `publisher`
+- [ ] `JSON.stringify` usado (não template string)
+- [ ] `tsc --noEmit` passa
+
+**Depends on:** T33
+
+---
+
+### T40 · Criar lib/blog/db.ts
+**Onda:** 4 | **Node:** N04.5 | **Agente:** Codex | **Prioridade:** HIGH (SRE-P8)
+
+**Arquivo a criar:** `lib/blog/db.ts`
+
+**⚠️ SRE-P8 obrigatório:** guard `!supabase`, sanitização antes de qualquer query, logging sem PII.
+
+```typescript
+// lib/blog/db.ts
+// Operações Supabase do blog. Segue SRE-P8.
+// Importa sanitize — nunca usa string de input diretamente em query.
+
+import { supabase }           from '@/lib/supabase';
+import { sanitizeEmail, sanitizeSlug, isValidEmail } from '@/lib/blog/sanitize';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+export interface NewsletterResult {
+  readonly ok:          boolean;
+  readonly isDuplicate: boolean;
+}
+
+// ─── Newsletter ───────────────────────────────────────────────────────────────
+export async function subscribeToBlogNewsletter(
+  rawEmail:     string,
+  rawSourceSlug: string
+): Promise<NewsletterResult> {
+  // Guard: supabase pode ser null em ambiente sem .env configurado
+  if (!supabase) {
+    console.warn('[db] supabase not configured');
+    return { ok: false, isDuplicate: false };
+  }
+
+  const email      = sanitizeEmail(rawEmail);
+  const sourceSlug = sanitizeSlug(rawSourceSlug);
+
+  // Validação antes de persistir — nunca confiar em validação do caller
+  if (!isValidEmail(email)) {
+    return { ok: false, isDuplicate: false };
+  }
+
+  const { error } = await supabase
+    .from('blog_newsletter_subscribers')
+    .insert({ email, source_slug: sourceSlug, subscribed_at: new Date().toISOString() });
+
+  if (error?.code === '23505') {
+    return { ok: true, isDuplicate: true };  // unique_violation — não é erro para o usuário
+  }
+
+  if (error) {
+    // SRE-P7: log estruturado sem email
+    console.error('[db] newsletter insert error', { code: error.code, message: error.message });
+    return { ok: false, isDuplicate: false };
+  }
+
+  return { ok: true, isDuplicate: false };
+}
+
+// ─── Views ────────────────────────────────────────────────────────────────────
+export async function incrementPostView(rawSlug: string): Promise<void> {
+  if (!supabase) return;
+
+  const slug = sanitizeSlug(rawSlug);
+  if (!slug) return;
+
+  const { error } = await supabase.rpc('increment_post_view', { p_slug: slug });
+
+  if (error) {
+    console.error('[db] increment_post_view error', { code: error.code });
+  }
+}
+```
+
+**Acceptance criteria:**
+- [ ] Guard `if (!supabase)` em todas as funções
+- [ ] `sanitizeEmail` e `sanitizeSlug` aplicados antes de qualquer query
+- [ ] `isValidEmail` validado antes de insert
+- [ ] Código `23505` retorna `isDuplicate: true` — não erro
+- [ ] `console.error` sem email ou dados do usuário
+- [ ] `incrementPostView` usa `.rpc('increment_post_view')` (ADR-007)
+- [ ] `tsc --noEmit` passa
+
+**Depends on:** T44, T39 (migration executada)
+
+---
+
+### T41 · Criar app/api/blog/newsletter/route.ts
+**Onda:** 5 | **Node:** N09.2 | **Agente:** Codex | **Prioridade:** BLOCKER (SRE-P1, P5, P6)
+
+**Arquivo a criar:** `app/api/blog/newsletter/route.ts`
+
+```typescript
+// app/api/blog/newsletter/route.ts
+// Route Handler de captura de newsletter. SRE-P1 + P5 + P6.
+// Rate limiting via middleware.ts (implementado em T51).
+
+import { subscribeToBlogNewsletter } from '@/lib/blog/db';
+import { isValidEmail, isString, isRecord } from '@/lib/blog/sanitize';
+
+// SRE-P5: headers de segurança em toda resposta
+const SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'Cache-Control':          'no-store',
+} as const;
+
+export async function POST(request: Request) {
+  // SRE-P1 — Passo 1: parse seguro
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { error: 'JSON inválido' },
+      { status: 400, headers: SECURITY_HEADERS }
+    );
+  }
+
+  // SRE-P1 — Passo 2: type guard explícito
+  if (!isRecord(body)) {
+    return Response.json(
+      { error: 'Formato inválido' },
+      { status: 400, headers: SECURITY_HEADERS }
+    );
+  }
+
+  const email      = isString(body.email) ? body.email : '';
+  const sourceSlug = isString(body.sourceSlug) ? body.sourceSlug : '';
+
+  // SRE-P1 — Passo 3: validação de negócio
+  if (!isValidEmail(email)) {
+    return Response.json(
+      { error: 'Email inválido' },
+      { status: 422, headers: SECURITY_HEADERS }
+    );
+  }
+
+  // SRE-P1 — Passo 4: operação de banco via lib/blog/db.ts
+  const result = await subscribeToBlogNewsletter(email, sourceSlug);
+
+  if (!result.ok && !result.isDuplicate) {
+    return Response.json(
+      { error: 'Erro interno' },
+      { status: 500, headers: SECURITY_HEADERS }
+    );
+  }
+
+  // 200 para sucesso E duplicado — evita enumeração de emails (SRE-P7)
+  return Response.json(
+    { ok: true },
+    { status: 200, headers: SECURITY_HEADERS }
+  );
+}
+
+// Rejeitar outros métodos explicitamente
+export async function GET() {
+  return Response.json(
+    { error: 'Método não permitido' },
+    { status: 405, headers: { ...SECURITY_HEADERS, Allow: 'POST' } }
+  );
+}
+```
+
+**Acceptance criteria:**
+- [ ] Parse do JSON com try/catch — status 400 em falha
+- [ ] Type guard `isRecord` e `isString` antes de qualquer acesso a campos
+- [ ] `isValidEmail` valida antes de persistir — status 422 em email inválido
+- [ ] `200` para sucesso E para email duplicado (anti-enumeração)
+- [ ] `500` para erro de banco
+- [ ] `SECURITY_HEADERS` em todas as respostas
+- [ ] `GET` retorna `405`
+- [ ] Zero log de email ou body completo
+- [ ] `tsc --noEmit` passa
+
+**Depends on:** T40
+
+---
+
+### T42 · Criar organism BlogNewsletter
+**Onda:** 6 | **Node:** N06.11 | **Agente:** Codex | **Prioridade:** HIGH
+
+**Arquivos a criar:**
+- `components/organisms/BlogNewsletter/BlogNewsletter.tsx`
+- `components/organisms/BlogNewsletter/BlogNewsletter.module.css`
+
+```typescript
+// 'use client' — requer useState para controle do formulário e feedback de envio
+'use client';
+import { useState, type FormEvent } from 'react';
+import styles from './BlogNewsletter.module.css';
+
+interface BlogNewsletterProps {
+  readonly sourceSlug?: string;
+}
+
+type FormState = 'idle' | 'loading' | 'success' | 'error' | 'invalid';
+
+export function BlogNewsletter({ sourceSlug = '' }: BlogNewsletterProps) {
+  const [email,     setEmail]     = useState('');
+  const [formState, setFormState] = useState<FormState>('idle');
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    // Validação client-side (UX) — servidor valida novamente (SRE-P1)
+    if (!email.includes('@') || email.length < 3) {
+      setFormState('invalid');
+      return;
+    }
+
+    setFormState('loading');
+
+    try {
+      const response = await fetch('/api/blog/newsletter', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, sourceSlug }),
+      });
+
+      if (response.ok) {
+        setFormState('success');
+        setEmail('');
+      } else {
+        setFormState('error');
+      }
+    } catch {
+      setFormState('error');
+    }
+  }
+
+  if (formState === 'success') {
+    return (
+      <div className={styles.success} role='status'>
+        <p>Inscrito com sucesso! Novos artigos no seu inbox.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.blogRoot}>
-      <main className={styles.main}>
-        {children}
-      </main>
+    <div className={styles.wrapper}>
+      <p className={styles.title}>Receba novos artigos</p>
+      <p className={styles.description}>
+        Conteúdo técnico sobre observabilidade e wide events, direto no seu email.
+      </p>
+
+      <form onSubmit={handleSubmit} className={styles.form} noValidate>
+        <label htmlFor='newsletter-email' className={styles.label}>
+          Email
+        </label>
+        <div className={styles.inputRow}>
+          <input
+            id='newsletter-email'
+            type='email'
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder='seu@email.com'
+            className={styles.input}
+            disabled={formState === 'loading'}
+            aria-describedby={
+              formState === 'invalid' ? 'newsletter-error'
+              : formState === 'error'   ? 'newsletter-error'
+              : undefined
+            }
+            required
+          />
+          <button
+            type='submit'
+            className={styles.button}
+            disabled={formState === 'loading'}
+            aria-busy={formState === 'loading'}
+          >
+            {formState === 'loading' ? 'Enviando…' : 'Inscrever'}
+          </button>
+        </div>
+
+        {(formState === 'invalid' || formState === 'error') && (
+          <p id='newsletter-error' className={styles.error} role='alert'>
+            {formState === 'invalid'
+              ? 'Email inválido. Verifique o endereço.'
+              : 'Erro ao inscrever. Tente novamente.'}
+          </p>
+        )}
+      </form>
     </div>
   );
 }
 ```
 
-**Arquivo a criar:** `app/blog/blog.module.css`
-
-```css
-/* app/blog/blog.module.css */
-.blogRoot {
-  min-height: 100vh;
-}
-
-.main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-}
-```
-
 **Acceptance criteria:**
-- [ ] Server Component (sem `'use client'`)
-- [ ] `metadata.title.template` configurado como `'%s | Pantor Blog'`
-- [ ] CSS Module criado — zero inline style
+- [ ] `'use client'` com comentário justificando
+- [ ] `FormState` como union type explícito
+- [ ] Validação client-side apenas como UX — não substitui server-side
+- [ ] `role='status'` no success, `role='alert'` no erro
+- [ ] `aria-describedby` conecta input ao erro
+- [ ] `aria-busy` no botão durante loading
+- [ ] `disabled` no input e botão durante loading
+- [ ] CSS Module exclusivo
 - [ ] `tsc --noEmit` passa
 
-**Depends on:** T10 | **Bloqueia:** T14
+**Depends on:** T41
 
 ---
 
-### T14 · Criar app/blog/page.tsx — GATE DA FASE 1
-**Onda:** 9 | **Node:** N05.1 | **Agente:** Codex | **Prioridade:** BLOCKER
+### T43 · Integrar trackEvent() nos eventos de blog
+**Onda:** 7 | **Node:** N09.4 | **Agente:** Codex | **Prioridade:** MEDIUM
 
-**Objetivo:** Página de listagem do blog. Gate final da Fase 1 — quando `next build` passar com esta task concluída, a fase está completa. Usa card mínimo (PostList organism completo é criado na Fase 2).
+**Objetivo:** Integrar a função `trackEvent()` existente na LP nos eventos de blog sem criar nova camada de analytics.
 
-**Arquivo a criar:** `app/blog/page.tsx`
-
-```typescript
-// app/blog/page.tsx — Server Component (SSG)
-// force-static: HTML gerado em build time, nunca em runtime.
-// PostList organism completo criado na Fase 2 (T25).
-// Esta implementação é o card mínimo para validar o pipeline.
-import type { Metadata }  from 'next';
-import { blogRepository } from '@/lib/blog/contentlayer';
-import styles             from './page.module.css';
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pantor.dev';
-
-export const dynamic    = 'force-static';
-export const revalidate = false;
-
-export async function generateMetadata(): Promise<Metadata> {
-  return {
-    title:       'Blog — Observabilidade e Wide Events',
-    description: 'Artigos técnicos sobre observabilidade, wide events, OpenTelemetry e desenvolvimento contínuo para times modernos.',
-    alternates:  { canonical: `${SITE_URL}/blog` },
-    openGraph: {
-      type:   'website',
-      url:    `${SITE_URL}/blog`,
-      title:  'Blog Técnico — Pantor',
-      images: [{ url: `${SITE_URL}/og-image.png`, width: 1200, height: 630 }],
-    },
-  };
-}
-
-export default async function BlogPage() {
-  const posts = await blogRepository.getPublishedPosts();
-
-  return (
-    <section
-      className={styles.container}
-      aria-label='Lista de artigos do blog'
-    >
-      <header className={styles.header}>
-        <h1 className={styles.title}>Blog</h1>
-        <p className={styles.subtitle}>
-          {posts.length} {posts.length === 1 ? 'artigo' : 'artigos'} sobre
-          observabilidade, wide events e desenvolvimento contínuo.
-        </p>
-      </header>
-
-      <ul className={styles.list} role='list'>
-        {posts.map(post => (
-          // TODO Fase 2 (T25): substituir por <PostList posts={posts} />
-          <li key={post.slug as string}>
-            <article aria-label={post.title}>
-              <h2>
-                <a href={`/blog/${post.slug as string}`}>{post.title}</a>
-              </h2>
-              <p>{post.description}</p>
-              <time dateTime={post.publishedAt.toISOString()}>
-                {post.publishedAt.toLocaleDateString('pt-BR')}
-              </time>
-            </article>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
+**Pré-requisito:** Verificar a assinatura de `trackEvent` existente antes de integrar:
+```bash
+grep -rn "trackEvent\|export.*track" lib/ hooks/ --include="*.ts" --include="*.tsx"
 ```
 
-**Arquivo a criar:** `app/blog/page.module.css`
-
-```css
-/* app/blog/page.module.css */
-.container {
-  padding: 2rem 0;
-}
-
-.header {
-  margin-bottom: 3rem;
-}
-
-.title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem;
-}
-
-.subtitle {
-  color: var(--color-text-muted, #6b7280);
-  margin: 0;
-}
-
-.list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 2rem;
-}
-```
+**Eventos a rastrear:**
+- `newsletter_subscribe` — em `BlogNewsletter` após POST 200
+- `post_view` — em `app/blog/[slug]/page.tsx` via `incrementPostView`
+- `cta_click_blog` — em `PostSidebar` quando clica no link de newsletter
 
 **Acceptance criteria:**
-- [ ] `export const dynamic = 'force-static'` presente
-- [ ] Usa `blogRepository.getPublishedPosts()` — não acessa `allPosts` diretamente
-- [ ] `generateMetadata` exportado com title, description e openGraph
-- [ ] `<section aria-label='Lista de artigos do blog'>` como wrapper semântico
-- [ ] **`next build` conclui com zero erros** ← GATE DA FASE 1
-- [ ] Os 3 posts seed aparecem renderizados em `/blog`
-- [ ] HTML gerado em `.next/server/app/blog/page.html`
+- [ ] `trackEvent` importado do módulo existente da LP — não reimplementado
+- [ ] Eventos com nomes snake_case consistentes
+- [ ] `trackEvent` não bloqueia o fluxo principal (fire-and-forget com `.catch(console.warn)`)
+- [ ] Zero PII nos payloads de evento (sem email, sem nome)
+- [ ] `tsc --noEmit` passa
 
-**Depends on:** T10, T13 | **Bloqueia:** GATE FASE 1
+**ADR draft obrigatório se `trackEvent` não existir ou tiver assinatura incompatível.**
+
+**Depends on:** T42
 
 ---
 
-## TASK RESERVADA — CLAUDE CODE
+## STATUS TRACKER — FASE 3
 
-### T12 · [CLAUDE CODE] Corrigir NEXT_PUBLIC_ADMIN_PASSWORD
-**Onda:** 2 | **Node:** N11.1 | **Agente:** CLAUDE CODE — não delegar | **Prioridade:** CRÍTICO
+| Task | Tipo | Onda | Status |
+|------|------|------|--------|
+| SRE-01 | SRE | 1 | `pending` |
+| SRE-03 | SRE | 1 | `pending` |
+| SRE-04 | SRE | 1 | `pending` |
+| SRE-05 | SRE | 1 | `pending` |
+| T44 | Funcional | 1 | `pending` |
+| SRE-02 | SRE | 2 | `pending` ⚠️ deps unified |
+| T32 | Funcional | 2 | `pending` |
+| T37 | Funcional | 2 | `pending` |
+| T34 | Funcional | 3 | `pending` |
+| T36 | Funcional | 3 | `pending` |
+| T38 | Funcional | 3 | `pending` |
+| T39 | Claude Code | 3 | `pending` 🔒 |
+| T33 | Funcional | 4 | `pending` |
+| T40 | Funcional | 4 | `pending` |
+| T35 | Funcional | 5 | `pending` |
+| T41 | Funcional | 5 | `pending` 🔐 SRE-P1 |
+| T42 | Funcional | 6 | `pending` |
+| T43 | Funcional | 7 | `pending` |
 
-**Esta task requer julgamento arquitetural e acesso a variáveis de ambiente. Não é delegada ao Codex.**
+---
 
-**Protocolo de execução:**
+## GATE DA FASE 3
 
 ```bash
-# Passo 1 — identificar todas as ocorrências
-grep -rn "NEXT_PUBLIC_ADMIN_PASSWORD" . \
-  --include="*.ts" --include="*.tsx" \
-  --include="*.env" --include="*.env.*" \
-  --include="*.example"
-```
-
-**Ações sequenciais:**
-1. Remover `NEXT_PUBLIC_ADMIN_PASSWORD` de todos os arquivos encontrados
-2. Criar `ADMIN_PASSWORD` (sem prefixo) no `.env.local` e documentar no `.env.example`
-3. Criar `app/api/admin/auth/route.ts` com validação server-side
-4. Criar/atualizar `middleware.ts` com proteção de rotas `/admin/*` via cookie `httpOnly`
-5. Criar `app/admin/login/page.tsx`
-
-**Acceptance criteria:**
-- [ ] `grep -r "NEXT_PUBLIC_ADMIN_PASSWORD" .` retorna zero resultados
-- [ ] Cookie `admin-session`: `httpOnly: true, secure: true, sameSite: 'strict'`
-- [ ] Rotas `/admin/*` protegidas no middleware
-- [ ] `.env.example` atualizado sem valores reais
-
-**Depends on:** T01 | **Bloqueia:** deploy em produção
-
----
-
-## STATUS TRACKER — FASE 1
-
-| Task | Descrição | Onda | Agente | Status |
-|------|-----------|------|--------|--------|
-| T01 | Estrutura de pastas | 1 | Codex | `pending` |
-| T02 | Instalar npm | 2 | Codex | `pending` |
-| T03 | entities.ts | 2 | Codex | `pending` |
-| T04 | value-objects.ts | 3 | Codex | `pending` |
-| T05 | repository.ts | 4 | Codex | `pending` |
-| T06 | types/blog.ts | 4 | Codex | `pending` |
-| T07 | contentlayer.config.ts | 5 | Codex | `pending` |
-| T08 | next.config.ts diff | 6 | Codex | `pending` |
-| T09 | reading-time.ts | 4 | Codex | `pending` |
-| T10 | contentlayer.ts (impl) | 7 | Codex | `pending` |
-| T11 | Posts MDX seed | 6 | Codex | `pending` |
-| T12 | NEXT_PUBLIC fix | 2 | **Claude Code** | `pending` 🔐 |
-| T13 | blog/layout.tsx | 8 | Codex | `pending` |
-| T14 | blog/page.tsx | 9 | Codex | `pending` 🏁 |
-
-**Status possíveis:** `pending` · `in-progress` · `done` · `blocked`
-
----
-
-## GATE DA FASE 1 — CRITÉRIOS DE CONCLUSÃO
-
-```bash
-# 1. Zero erros TypeScript
+# 1. TypeScript
 npx tsc --noEmit
-# Esperado: saída vazia (zero erros)
+# Esperado: zero erros
 
-# 2. Build bem-sucedido
+# 2. Build
 npm run build
 # Esperado: ✓ Compiled successfully
 
-# 3. HTML estático gerado para os 3 posts
-ls .next/server/app/blog/
-# Esperado: page.html, wide-events-intro/, observabilidade-vs-monitoramento/, opentelemetry-primeiros-passos/
+# 3. Sitemap gerado
+curl http://localhost:3000/sitemap.xml | grep '<url>'
+# Esperado: /blog, /blog/wide-events-intro etc.
 
-# 4. Vulnerabilidade corrigida
-grep -r "NEXT_PUBLIC_ADMIN_PASSWORD" . --include="*.ts" --include="*.tsx"
+# 4. RSS válido
+curl http://localhost:3000/api/blog/rss | grep '<item>'
+# Esperado: 3+ items
+
+# 5. OG dinâmica
+curl "http://localhost:3000/api/blog/og?slug=wide-events-intro" -I
+# Esperado: Content-Type: image/png, status 200
+
+# 6. Newsletter com email inválido
+curl -X POST http://localhost:3000/api/blog/newsletter \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"invalido"}'
+# Esperado: 422
+
+# 7. Newsletter com email válido
+curl -X POST http://localhost:3000/api/blog/newsletter \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"test@example.com","sourceSlug":"wide-events-intro"}'
+# Esperado: 200 {"ok":true}
+
+# 8. Auditoria SRE
+grep -rn 'Function(code)' components/ | grep -v 'TRUST BOUNDARY'
+# Esperado: zero linhas (toda ocorrência tem comentário de trust boundary)
+
+grep -rn '<a href="/blog' components/ app/blog/
 # Esperado: zero resultados
 
-# 5. Frontmatter inválido quebra o build
-# Teste manual: criar post sem campo `title`, rodar `next build`
-# Esperado: erro claro sobre campo obrigatório ausente
+# 9. JSON-LD presente em post
+curl http://localhost:3000/blog/wide-events-intro | grep 'application/ld+json'
+# Esperado: uma ocorrência
 ```
 
 ---
 
-## DELTA INTELLIGENCE — PREENCHER APÓS FASE 1
-
-Claude Code preenche após todas as tasks concluídas:
+## DELTA INTELLIGENCE — PREENCHER APÓS FASE 3
 
 ```
-DIVERGÊNCIAS ENCONTRADAS:
-- 
+DIVERGÊNCIAS:
+-
 
-CONSTRAINTS VIOLADAS (mesmo que o build passe):
-- 
+VIOLAÇÕES SRE:
+-
 
-PADRÕES EMERGENTES NÃO ESPECIFICADOS:
-- 
+CONSTRAINTS VIOLADAS:
+-
 
-REFINAMENTOS PARA AGENTS.md — FASE 2:
-- 
+PADRÕES EMERGENTES:
+-
+
+REFINAMENTOS PARA FASE 4:
+-
 ```
 
 ---
 
+*AGENTS.md · Fase 3 + SRE · Pantor Blog × LP*
+*Gerado por Claude Code com base em HELIX.md v3.0 — 2026-05-22*

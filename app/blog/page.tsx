@@ -1,10 +1,12 @@
 // app/blog/page.tsx - Server Component (SSG)
 // force-static: HTML gerado em build time, nunca em runtime.
-// PostList organism completo criado na Fase 2 (T25).
-// Esta implementacao e o card minimo para validar o pipeline.
-import type { Metadata }  from 'next';
+import type { Metadata } from 'next';
+import { BlogHeader } from '@/components/organisms/BlogHeader/BlogHeader';
+import { PostList } from '@/components/organisms/PostList/PostList';
+import type { BlogPost } from '@/domain/blog/entities';
 import { blogRepository } from '@/lib/blog/contentlayer';
-import styles             from './page.module.css';
+import type { BlogPostSummary } from '@/types/blog';
+import styles from './page.module.css';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pantor.dev';
 
@@ -25,38 +27,34 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+function toPostSummary(post: BlogPost): BlogPostSummary {
+  return {
+    slug: post.slug,
+    title: post.title,
+    description: post.description,
+    publishedAt: post.publishedAt.toISOString(),
+    readingTime: post.readingTime.minutes,
+    category: post.category.slug,
+    tags: post.tags.map(tag => tag),
+    author: post.author.slug,
+  };
+}
+
 export default async function BlogPage() {
   const posts = await blogRepository.getPublishedPosts();
+  const summaries = posts.map(toPostSummary);
 
   return (
     <section
       className={styles.container}
       aria-label='Lista de artigos do blog'
     >
-      <header className={styles.header}>
-        <h1 className={styles.title}>Blog</h1>
-        <p className={styles.subtitle}>
-          {posts.length} {posts.length === 1 ? 'artigo' : 'artigos'} sobre
-          observabilidade, wide events e desenvolvimento continuo.
-        </p>
-      </header>
-
-      <ul className={styles.list} role='list'>
-        {posts.map(post => (
-          // TODO Fase 2 (T25): substituir por <PostList posts={posts} />
-          <li key={post.slug as string}>
-            <article aria-label={post.title}>
-              <h2>
-                <a href={`/blog/${post.slug as string}`}>{post.title}</a>
-              </h2>
-              <p>{post.description}</p>
-              <time dateTime={post.publishedAt.toISOString()}>
-                {post.publishedAt.toLocaleDateString('pt-BR')}
-              </time>
-            </article>
-          </li>
-        ))}
-      </ul>
+      <BlogHeader
+        title='Blog'
+        description='Artigos sobre observabilidade, wide events e desenvolvimento contínuo.'
+        postCount={summaries.length}
+      />
+      <PostList posts={summaries} />
     </section>
   );
 }
