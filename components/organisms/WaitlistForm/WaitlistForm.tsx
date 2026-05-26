@@ -66,7 +66,6 @@ export function WaitlistForm() {
   const {
     formData,
     errors,
-    status,
     isDuplicate,
     updateField,
     handleSubmit,

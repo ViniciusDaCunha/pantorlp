@@ -2,9 +2,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PostList } from '@/components/organisms/PostList/PostList';
-import type { BlogPost } from '@/domain/blog/entities';
-import { blogRepository } from '@/lib/blog/contentlayer';
-import type { BlogCategoryParams, BlogPostSummary } from '@/types/blog';
+import { blogRepository, toSummary } from '@/lib/blog/contentlayer';
+import { generateCategoryMetadata } from '@/lib/blog/seo';
+import type { BlogCategoryParams } from '@/types/blog';
 import styles from './page.module.css';
 
 export const dynamic = 'force-static';
@@ -12,19 +12,6 @@ export const revalidate = false;
 
 interface PageProps {
   readonly params: Promise<BlogCategoryParams>;
-}
-
-function toPostSummary(post: BlogPost): BlogPostSummary {
-  return {
-    slug: post.slug,
-    title: post.title,
-    description: post.description,
-    publishedAt: post.publishedAt.toISOString(),
-    readingTime: post.readingTime.minutes,
-    category: post.category.label,
-    tags: post.tags.map(tag => tag),
-    author: post.author.slug,
-  };
 }
 
 export async function generateStaticParams(): Promise<BlogCategoryParams[]> {
@@ -40,10 +27,7 @@ export async function generateMetadata({
   const category = categories.find(candidate => candidate.slug === categoria);
   if (!category) return {};
 
-  return {
-    title: `${category.label} - Blog Pantor`,
-    description: category.description,
-  };
+  return generateCategoryMetadata(category);
 }
 
 export default async function CategoryPage({
@@ -56,7 +40,7 @@ export default async function CategoryPage({
   if (!category) notFound();
 
   const posts = await blogRepository.getPostsByCategory(categoria);
-  const summaries = posts.map(toPostSummary);
+  const summaries = posts.map(toSummary);
 
   return (
     <section className={styles.container} aria-label={`Artigos de ${category.label}`}>

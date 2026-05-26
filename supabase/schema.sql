@@ -98,3 +98,52 @@ as $$
   group by 1, 2
   order by 1, 2;
 $$;
+
+-- ─── Blog Newsletter ─────────────────────────────────────────────────────────
+create table if not exists public.blog_newsletter_subscribers (
+  id            uuid primary key default gen_random_uuid(),
+  email         text not null unique,
+  source_slug   text,
+  subscribed_at timestamptz not null default now(),
+  created_at    timestamptz not null default now()
+);
+
+create index if not exists idx_blog_newsletter_subscribed_at
+  on public.blog_newsletter_subscribers(subscribed_at desc);
+
+create index if not exists idx_blog_newsletter_source_slug
+  on public.blog_newsletter_subscribers(source_slug);
+
+alter table public.blog_newsletter_subscribers enable row level security;
+create policy "allow_public_insert_blog_newsletter" on public.blog_newsletter_subscribers
+  for insert to anon with check (true);
+create policy "deny_public_select_blog_newsletter" on public.blog_newsletter_subscribers
+  for select to anon using (false);
+
+-- ─── Blog Post Views ─────────────────────────────────────────────────────────
+create table if not exists public.blog_post_views (
+  slug       text primary key,
+  views      bigint not null default 0 check (views >= 0),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_blog_post_views_views
+  on public.blog_post_views(views desc);
+
+alter table public.blog_post_views enable row level security;
+create policy "deny_public_select_blog_post_views" on public.blog_post_views
+  for select to anon using (false);
+
+create or replace function public.increment_post_view(p_slug text)
+returns void
+language plpgsql security definer
+as $$
+begin
+  insert into public.blog_post_views(slug, views, updated_at)
+  values (p_slug, 1, now())
+  on conflict (slug)
+  do update set
+    views = public.blog_post_views.views + 1,
+    updated_at = now();
+end;
+$$;

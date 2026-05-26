@@ -2,10 +2,10 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PostList } from '@/components/organisms/PostList/PostList';
-import type { BlogPost } from '@/domain/blog/entities';
 import { createTag } from '@/domain/blog/value-objects';
-import { blogRepository } from '@/lib/blog/contentlayer';
-import type { BlogPostSummary, BlogTagParams } from '@/types/blog';
+import { blogRepository, toSummary } from '@/lib/blog/contentlayer';
+import { generateTagMetadata } from '@/lib/blog/seo';
+import type { BlogTagParams } from '@/types/blog';
 import styles from './page.module.css';
 
 export const dynamic = 'force-static';
@@ -13,19 +13,6 @@ export const revalidate = false;
 
 interface PageProps {
   readonly params: Promise<BlogTagParams>;
-}
-
-function toPostSummary(post: BlogPost): BlogPostSummary {
-  return {
-    slug: post.slug,
-    title: post.title,
-    description: post.description,
-    publishedAt: post.publishedAt.toISOString(),
-    readingTime: post.readingTime.minutes,
-    category: post.category.label,
-    tags: post.tags.map(tag => tag),
-    author: post.author.slug,
-  };
 }
 
 export async function generateStaticParams(): Promise<BlogTagParams[]> {
@@ -38,10 +25,7 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { tag } = await params;
 
-  return {
-    title: `#${tag} - Blog Pantor`,
-    description: `Artigos sobre ${tag} no Blog da Pantor.`,
-  };
+  return generateTagMetadata(tag);
 }
 
 export default async function TagPage({
@@ -53,7 +37,7 @@ export default async function TagPage({
 
   if (posts.length === 0) notFound();
 
-  const summaries = posts.map(toPostSummary);
+  const summaries = posts.map(toSummary);
 
   return (
     <section className={styles.container} aria-label={`Artigos com tag ${tagParam}`}>

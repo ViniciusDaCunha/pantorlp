@@ -14,9 +14,9 @@ vi.mock('@/components/molecules/ReadingTime/ReadingTime', () => ({
 
 vi.mock('@/components/molecules/TagBadge/TagBadge', () => ({
   TagBadge: ({ tag }: { readonly tag: string }) => (
-    <a href={`/blog/tag/${tag}`} aria-label={`Ver posts com tag ${tag}`}>
+    <span data-href={`/blog/tag/${tag}`} aria-label={`Ver posts com tag ${tag}`}>
       {tag}
-    </a>
+    </span>
   ),
 }));
 
@@ -49,7 +49,7 @@ describe('PostCard', () => {
     const html = renderToStaticMarkup(<PostCard post={mockPost} />);
 
     expect(html).toContain('aria-label="Ver posts com tag wide-events"');
-    expect(html).toContain('href="/blog/tag/wide-events"');
+    expect(html).toContain('data-href="/blog/tag/wide-events"');
   });
 
   it('renderiza article com aria-label', () => {

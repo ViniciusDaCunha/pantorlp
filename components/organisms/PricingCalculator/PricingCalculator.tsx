@@ -5,7 +5,6 @@ import { Icon } from "@/components/atoms/Icon/Icon";
 import {
   PANTOR_PLANS,
   ENTERPRISE_PLAN,
-  getPlanComparison,
   estimateFromDAU,
   formatBRL,
   formatEvents,
@@ -36,7 +35,6 @@ function useSessionId(): string | null {
 
 // ─── Plan Card ────────────────────────────────────────────────────────────────
 function PlanCard({ plan }: { plan: PantorPlan & { features: PlanFeatures } }) {
-  const comparison = useMemo(() => getPlanComparison(plan), [plan]);
   const sessionId = useSessionId();
 
   function handleCtaClick(): void {

@@ -314,11 +314,6 @@ export default function PantorFAQ() {
     }))
     .filter((s) => s.items.length > 0)
 
-  const totalResults = filteredSections.reduce(
-    (acc, s) => acc + s.items.length,
-    0
-  )
-
   // Reset open items on search/filter change
   useEffect(() => {
     setOpenItems(new Set())

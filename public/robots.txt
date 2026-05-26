@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /blog/
+Allow: /blog/categoria/
+Allow: /blog/tag/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /.velite/
+
+Sitemap: https://pantor.dev/sitemap.xml

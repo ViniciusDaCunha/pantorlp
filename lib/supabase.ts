@@ -125,11 +125,10 @@ export async function getPlanCtaClickStats(): Promise<
 export async function getAdminMetrics() {
   if (!supabase) return null;
 
-  const [waitlistRes, visitorsRes, conversionsByDayRes, rolesRes, planClicksRes] =
+  const [waitlistRes, visitorsRes, rolesRes, planClicksRes] =
     await Promise.allSettled([
       supabase.from("waitlist").select("id, role, created_at"),
       supabase.from("visitor_events").select("id, session_id, created_at").eq("event_type", "page_view"),
-      supabase.rpc("conversions_by_day"),
       supabase.from("waitlist").select("role").not("role", "is", null),
       // Plan CTA interest heatmap — see plan_cta_clicks_by_plan() in schema.sql
       supabase.rpc("plan_cta_clicks_by_plan"),

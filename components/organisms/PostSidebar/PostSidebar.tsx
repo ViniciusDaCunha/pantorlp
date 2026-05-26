@@ -1,42 +1,44 @@
 // 'use client' - requer useTableOfContents (IntersectionObserver) e useReadingProgress.
 'use client';
 
+import { BlogNewsletter } from '@/components/organisms/BlogNewsletter/BlogNewsletter';
 import type { BlogPost } from '@/domain/blog/entities';
 import { useReadingProgress } from '@/hooks/useReadingProgress';
-import { useTableOfContents, type TocEntry } from '@/hooks/useTableOfContents';
+import { useTableOfContents } from '@/hooks/useTableOfContents';
+import { trackEvent } from '@/lib/supabase';
 import styles from './PostSidebar.module.css';
 
 interface PostSidebarProps {
   readonly post: BlogPost;
 }
 
-function extractHeadings(bodyCode: string): TocEntry[] {
-  const compiledHeadingPattern = /\b\w\(\w\.(h[23]),\{id:"([^"]+)",children:(?:\w\(\w\.a,\{href:"#[^"]+",children:"([^"]+)"\}\)|"([^"]+)")/g;
-  const createElementHeadingPattern = /createElement\("(h[23])"[^}]*id:"([^"]+)"[^}]*,\s*"([^"]+)"/g;
-  const matches = [
-    ...bodyCode.matchAll(compiledHeadingPattern),
-    ...bodyCode.matchAll(createElementHeadingPattern),
-  ];
+function getOrCreateSessionId(): string | null {
+  if (typeof window === 'undefined') return null;
 
-  return matches.flatMap(match => {
-    const tag = match[1];
-    const id = match[2];
-    const text = match[3] ?? match[4];
+  const key = 'pantor_session_id';
+  let sessionId = sessionStorage.getItem(key);
 
-    if (!tag || !id || !text) return [];
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    sessionStorage.setItem(key, sessionId);
+  }
 
-    return [{
-      id,
-      text,
-      level: Number(tag.slice(1)) as 2 | 3,
-    }];
-  });
+  return sessionId;
 }
 
 export function PostSidebar({ post }: PostSidebarProps) {
-  const headings = extractHeadings(post.body);
+  const headings = post.headings;
   const { activeId } = useTableOfContents(headings);
   const progress = useReadingProgress();
+  const slug = post.slug as string;
+
+  function handleNewsletterLinkClick(): void {
+    void trackEvent('cta_click_blog', getOrCreateSessionId(), {
+      source_slug: slug,
+    }).catch(() => {
+      console.warn('[PostSidebar] cta_click_blog tracking failed');
+    });
+  }
 
   return (
     <aside className={styles.sidebar} aria-label='Navegação do artigo'>
@@ -67,11 +69,17 @@ export function PostSidebar({ post }: PostSidebarProps) {
         </nav>
       )}
 
-      <div className={styles.newsletterPlaceholder} aria-label='Newsletter'>
-        <p className={styles.newsletterTitle}>Receba novos artigos</p>
-        <p className={styles.newsletterText}>
-          Integração de newsletter disponível em breve.
-        </p>
+      <div className={styles.newsletter} aria-label='Newsletter'>
+        <a
+          href='#blog-newsletter'
+          className={styles.newsletterLink}
+          onClick={handleNewsletterLinkClick}
+        >
+          Receber artigos por email
+        </a>
+        <div id='blog-newsletter'>
+          <BlogNewsletter sourceSlug={slug} />
+        </div>
       </div>
     </aside>
   );

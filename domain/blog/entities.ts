@@ -15,10 +15,17 @@ export interface BlogPost {
   readonly publishedAt: Date;
   readonly updatedAt:   Date;
   readonly readingTime: ReadingTime;
+  readonly headings:    ReadonlyArray<BlogHeading>;
   readonly featured:    boolean;
   readonly draft:       boolean;
   readonly ogImage:     string | null;
   readonly series:      BlogSeries | null;
+}
+
+export interface BlogHeading {
+  readonly id:    string;
+  readonly text:  string;
+  readonly level: 2 | 3;
 }
 
 export interface BlogAuthor {

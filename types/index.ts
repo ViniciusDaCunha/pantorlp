@@ -24,7 +24,14 @@ export interface WaitlistSubmitResult {
 
 // ─── Analytics ──────────────────────────────────────────────────────────────
 
-export type VisitorEventType = "page_view" | "cta_click" | "form_start" | "form_submit";
+export type VisitorEventType =
+  | "page_view"
+  | "cta_click"
+  | "form_start"
+  | "form_submit"
+  | "newsletter_subscribe"
+  | "post_view"
+  | "cta_click_blog";
 
 export interface VisitorEvent {
   id: string;

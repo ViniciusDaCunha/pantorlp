@@ -6,6 +6,8 @@ import { PostSidebar } from '@/components/organisms/PostSidebar/PostSidebar';
 import { RelatedPosts } from '@/components/organisms/RelatedPosts/RelatedPosts';
 import { createSlug } from '@/domain/blog/value-objects';
 import { blogRepository } from '@/lib/blog/contentlayer';
+import { incrementPostView } from '@/lib/blog/db';
+import { generatePostJsonLd, generatePostMetadata } from '@/lib/blog/seo';
 import type { BlogSlugParams } from '@/types/blog';
 import styles from './page.module.css';
 
@@ -28,26 +30,7 @@ export async function generateMetadata({
   const post = await blogRepository.getPostBySlug(createSlug(slug));
   if (!post) return {};
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pantor.dev';
-
-  return {
-    title: post.title,
-    description: post.description,
-    alternates: { canonical: `${siteUrl}/blog/${post.slug}` },
-    openGraph: {
-      type: 'article',
-      url: `${siteUrl}/blog/${post.slug}`,
-      title: post.title,
-      description: post.description,
-      publishedTime: post.publishedAt.toISOString(),
-      modifiedTime: post.updatedAt.toISOString(),
-      authors: [post.author.name],
-      tags: post.tags.map(tag => tag),
-      images: post.ogImage
-        ? [{ url: `${siteUrl}${post.ogImage}`, width: 1200, height: 630 }]
-        : [{ url: `${siteUrl}/og-image.png`, width: 1200, height: 630 }],
-    },
-  };
+  return generatePostMetadata(post);
 }
 
 export default async function PostPage({
@@ -57,11 +40,20 @@ export default async function PostPage({
   const post = await blogRepository.getPostBySlug(createSlug(slug));
   if (!post || post.draft) notFound();
 
+  const jsonLd = generatePostJsonLd(post);
   const related = await blogRepository.getRelatedPosts(post, 3);
+
+  void incrementPostView(slug).catch(() => {
+    console.warn('[PostPage] post_view tracking failed');
+  });
 
   return (
     <div className={styles.layout}>
       <article className={styles.article} aria-label={post.title}>
+        <script
+          type='application/ld+json'
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <PostContent post={post} />
         <RelatedPosts posts={related} />
       </article>

@@ -1,9 +1,0 @@
-{
-  "/_not-found/page": "/_not-found",
-  "/admin/page": "/admin",
-  "/page": "/",
-  "/blog/categoria/[categoria]/page": "/blog/categoria/[categoria]",
-  "/blog/page": "/blog",
-  "/blog/tag/[tag]/page": "/blog/tag/[tag]",
-  "/blog/[slug]/page": "/blog/[slug]"
-}

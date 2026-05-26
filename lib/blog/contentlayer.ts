@@ -7,6 +7,7 @@ import type { Post as VelitePost }                from '../../.velite';
 import type { BlogAuthor, BlogCategory, BlogPost } from '@/domain/blog/entities';
 import type { IBlogRepository }                   from '@/domain/blog/repository';
 import type { Slug, Tag }                         from '@/domain/blog/value-objects';
+import type { BlogPostSummary }                   from '@/types/blog';
 import { createSlug, createTag }                  from '@/domain/blog/value-objects';
 import { computeReadingTime }                     from './reading-time';
 
@@ -54,12 +55,26 @@ function toDomainPost(raw: VelitePost): BlogPost {
     publishedAt: new Date(raw.publishedAt),
     updatedAt:   new Date(raw.updatedAt ?? raw.publishedAt),
     readingTime: computeReadingTime(raw.raw),
+    headings:    raw.headings ?? [],
     featured:    raw.featured,
     draft:       raw.draft,
     ogImage:     raw.ogImage ?? null,
     series: raw.seriesSlug
       ? { slug: raw.seriesSlug, title: raw.seriesSlug, part: raw.seriesPart ?? 1, total: 1 }
       : null,
+  };
+}
+
+export function toSummary(post: BlogPost): BlogPostSummary {
+  return {
+    slug:        post.slug as string,
+    title:       post.title,
+    description: post.description,
+    publishedAt: post.publishedAt.toISOString(),
+    readingTime: post.readingTime.minutes,
+    category:    post.category.slug,
+    tags:        post.tags.map(tag => tag as string),
+    author:      post.author.slug,
   };
 }
 

@@ -2,6 +2,7 @@
 // Renderiza MDX compilado pelo Velite 0.3.1 a partir de body string.
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import { Fragment, jsx, jsxs } from 'react/jsx-runtime';
+import { MDXErrorBoundary } from '@/components/atoms/MDXErrorBoundary/MDXErrorBoundary';
 import { CodeBlock } from '@/components/molecules/CodeBlock/CodeBlock';
 import type { BlogPost } from '@/domain/blog/entities';
 import styles from './PostContent.module.css';
@@ -34,9 +35,35 @@ type MdxComponents = Readonly<{
   pre: (props: MdxPreProps) => ReactNode;
 }>;
 
-function createMdxModule(code: string): MdxModule {
-  const createModule = Function(code) as unknown as MdxModuleFactory;
-  return createModule({ Fragment, jsx, jsxs });
+const runtime: MdxRuntime = { Fragment, jsx, jsxs };
+
+const runtimeRequire = (mod: string): MdxRuntime => {
+  if (mod === 'react/jsx-runtime') return runtime;
+  throw new Error(`[PostContent] módulo não autorizado: ${mod}`);
+};
+
+function MDXRenderer({
+  code,
+  components,
+}: {
+  readonly code: string;
+  readonly components: MdxComponents;
+}) {
+  try {
+    // TRUST BOUNDARY (ADR-011): post.body é EXCLUSIVAMENTE build artifact do Velite.
+    // Gerado em build time por velite.config.ts - nunca input de usuário ou conteúdo remoto.
+    // Não alterar este bloco para aceitar qualquer outra fonte sem revisão de segurança.
+    const createModule = new Function(code) as unknown as MdxModuleFactory;
+    const { default: Content } = createModule(runtimeRequire('react/jsx-runtime'));
+    return <Content components={components} />;
+  } catch (error) {
+    console.error('[PostContent] MDX render error', (error as Error).message);
+    return (
+      <p role='alert' aria-live='polite'>
+        Erro ao renderizar o conteúdo. Tente recarregar a página.
+      </p>
+    );
+  }
 }
 
 function Pre({ children, className, 'data-language': dataLanguage }: MdxPreProps) {
@@ -56,8 +83,6 @@ const mdxComponents: MdxComponents = {
 };
 
 export function PostContent({ post }: PostContentProps) {
-  const Content = createMdxModule(post.body).default;
-
   return (
     <article className={styles.article} aria-label={post.title}>
       <header className={styles.header}>
@@ -67,7 +92,9 @@ export function PostContent({ post }: PostContentProps) {
       </header>
 
       <div className={styles.content} data-mdx-content>
-        <Content components={mdxComponents} />
+        <MDXErrorBoundary>
+          <MDXRenderer code={post.body} components={mdxComponents} />
+        </MDXErrorBoundary>
       </div>
     </article>
   );

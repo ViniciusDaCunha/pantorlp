@@ -1,4 +1,5 @@
 import React, { JSX } from "react";
+import Image from "next/image";
 
 type IconName =
   | "bolt"
@@ -147,13 +148,13 @@ const iconPaths: Partial<Record<IconName, JSX.Element>> = {
 export function Icon({ name, className = "", title }: IconProps) {
   if (name === "capture") {
     return (
-      <img
+      <Image
         src="/capture.svg"
         alt={title || "capture icon"}
         className={className}
+        width={56}
+        height={24}
         style={{ 
-          width: "56px", 
-          height: "24px",
           filter: "brightness(0) invert(1)"
         }}
       />

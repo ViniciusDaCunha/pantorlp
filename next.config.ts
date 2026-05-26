@@ -33,6 +33,7 @@ class VeliteWebpackPlugin {
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  outputFileTracingRoot: process.cwd(),
   images: {
     formats: ["image/webp"],
   },

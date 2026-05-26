@@ -22,7 +22,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         else ref.current = el;
       }
       intersectionRef.current = el;
-    }, [ref]);
+    }, [intersectionRef, ref]);
     const classNames = [styles.button, styles[variant], styles[size], isLoading ? styles.loading : "", className]
       .filter(Boolean).join(" ");
 
